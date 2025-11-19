@@ -3,6 +3,8 @@ import torch
 import torch.optim as optim
 import os
 import argparse
+import time
+import csv
 
 from qcgpt.training.supervised import (
     build_simplified_dataloader,
@@ -21,6 +23,9 @@ def main():
     parser.add_argument("--ckpt", type=str, default=None)
     parser.add_argument("--basis_only", action="store_true")
     parser.add_argument("--n_random_states", type=int, default=0)
+    parser.add_argument("--out_dir", type=str, default="model_checkpoints")
+    parser.add_argument("--run_name", type=str, default=None)
+    parser.add_argument("--prefix", type=str, default="transformer_v1")
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -52,7 +57,15 @@ def main():
     )
 
     best_loss = float("inf")
-    os.makedirs("checkpoints", exist_ok=True)
+
+    ts = time.strftime("%Y%m%d_%H%M%S")
+    run_name = args.run_name or ts
+    run_dir = os.path.join(args.out_dir, run_name)
+    os.makedirs(run_dir, exist_ok=True)
+    loss_csv = os.path.join(run_dir, f"{args.prefix}_loss.csv")
+    with open(loss_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["epoch", "loss"]) 
 
     for epoch in range(1, args.num_epochs + 1):
         train_loss = train_supervised_epoch(
@@ -63,12 +76,22 @@ def main():
         )
         print(f"[Supervised] Epoch {epoch:03d}  TrainLoss={train_loss:.4f}")
 
-        torch.save({"model_state_dict": model.state_dict()}, "checkpoints/supervised_current.pt")
+        with open(loss_csv, "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow([epoch, f"{train_loss:.8f}"])
+
+        current_path = os.path.join(run_dir, f"{args.prefix}_current.pt")
+        torch.save({"model_state_dict": model.state_dict()}, current_path)
         if train_loss < best_loss:
             best_loss = train_loss
-            torch.save({"model_state_dict": model.state_dict()}, "checkpoints/supervised_best.pt")
+            best_path = os.path.join(run_dir, f"{args.prefix}_best.pt")
+            torch.save({"model_state_dict": model.state_dict()}, best_path)
+        if epoch % 10 == 0:
+            final_ep_path = os.path.join(run_dir, f"{args.prefix}_final_ep{epoch:03d}.pt")
+            torch.save({"model_state_dict": model.state_dict()}, final_ep_path)
 
-    torch.save({"model_state_dict": model.state_dict()}, "checkpoints/supervised_final.pt")
+    final_path = os.path.join(run_dir, f"{args.prefix}_final.pt")
+    torch.save({"model_state_dict": model.state_dict()}, final_path)
 
 
 if __name__ == "__main__":
