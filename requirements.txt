@@ -1,0 +1,9 @@
+torch
+numpy
+qiskit
+matplotlib
+pandas
+torch
+numpy
+qiskit
+matplotlib
