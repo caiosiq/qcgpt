@@ -3,7 +3,10 @@ import argparse
 import csv
 import numpy as np
 import torch
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from qiskit.exceptions import MissingOptionalLibraryError
 
 from qcgpt.gates import VOCAB, PAD_ID, BOS_CIRC_ID, EOS_CIRC_ID
 from qcgpt.models.policy import CircuitPolicy
@@ -25,7 +28,10 @@ def load_model(ckpt: str, device: torch.device) -> CircuitPolicy:
         max_circ_len=128,
     ).to(device)
     if ckpt and os.path.exists(ckpt):
-        state = torch.load(ckpt, map_location=device)
+        try:
+            state = torch.load(ckpt, map_location=device, weights_only=True)
+        except TypeError:
+            state = torch.load(ckpt, map_location=device)
         model.load_state_dict(state["model_state_dict"])
     model.eval()
     return model
@@ -48,7 +54,15 @@ def reconstruct_circuit(model: CircuitPolicy, device: torch.device, spec_tensor:
 
 
 def render_qc_image(qc) -> np.ndarray:
-    fig = qc.draw(output="mpl")
+    try:
+        fig = qc.draw(output="mpl")
+    except MissingOptionalLibraryError:
+        text = qc.draw(output="text")
+        fig = plt.figure(figsize=(6, 2))
+        ax = fig.add_subplot(111)
+        ax.axis("off")
+        ax.text(0, 1, str(text), family="monospace", va="top", ha="left", fontsize=6)
+        fig.tight_layout(pad=0.2)
     fig.canvas.draw()
     w, h = fig.canvas.get_width_height()
     buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
