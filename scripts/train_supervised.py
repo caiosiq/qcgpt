@@ -80,15 +80,10 @@ def main():
             writer = csv.writer(f)
             writer.writerow([epoch, f"{train_loss:.8f}"])
 
-        current_path = os.path.join(run_dir, f"{args.prefix}_current.pt")
-        torch.save({"model_state_dict": model.state_dict()}, current_path)
         if train_loss < best_loss:
             best_loss = train_loss
             best_path = os.path.join(run_dir, f"{args.prefix}_best.pt")
             torch.save({"model_state_dict": model.state_dict()}, best_path)
-        if epoch % 10 == 0:
-            final_ep_path = os.path.join(run_dir, f"{args.prefix}_final_ep{epoch:03d}.pt")
-            torch.save({"model_state_dict": model.state_dict()}, final_ep_path)
 
     final_path = os.path.join(run_dir, f"{args.prefix}_final.pt")
     torch.save({"model_state_dict": model.state_dict()}, final_path)

@@ -10,9 +10,10 @@
 
 source ~/.bashrc
 module load miniforge/24.3.0-0 || true
-conda activate base
+conda activate qcgpt
 
-cd /home/caiosiq/qcgpt
+cd /orcd/home/002/caiosiq/qcgpt || cd /home/caiosiq/qcgpt
+export PYTHONPATH=/orcd/home/002/caiosiq/qcgpt:/home/caiosiq/qcgpt:$PYTHONPATH
 
 # Parameters (override via environment: PREFIX, RUN_NAME, CKPT_PATH, EPOCHS, SAMPLES, BATCH, RAWDEPTH)
 PREFIX=${PREFIX:-transformer_v1}
@@ -23,7 +24,7 @@ SAMPLES=${SAMPLES:-10000}
 BATCH=${BATCH:-64}
 RAWDEPTH=${RAWDEPTH:-16}
 
-python scripts/train_supervised.py \
+python3 scripts/train_supervised.py \
   --num_epochs ${EPOCHS} \
   --num_samples ${SAMPLES} \
   --batch_size ${BATCH} \
