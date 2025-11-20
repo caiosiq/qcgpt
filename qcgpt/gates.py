@@ -4,10 +4,14 @@ from typing import List, Dict
 
 # Core gate types (discrete, no parameters for v0)
 GATE_TYPES = [
-    "ID",      # identity
+    "ID",
     "X", "Y", "Z",
     "H", "S", "T",
+    "RX_PI_16", "RX_PI_8", "RX_PI_4", "RX_PI_2", "RX_PI",
+    "RY_PI_16", "RY_PI_8", "RY_PI_4", "RY_PI_2", "RY_PI",
+    "RZ_PI_16", "RZ_PI_8", "RZ_PI_4", "RZ_PI_2", "RZ_PI",
     "CX", "CZ", "SWAP",
+    "CCX", "CCZ", "CSWAP",
 ]
 
 # Special tokens
@@ -18,8 +22,8 @@ SPECIAL_TOKENS = [
     "->", ";",
 ]
 
-# Qubit index tokens for 2 qubits
-QUBIT_TOKENS = ["q0", "q1"]
+# Qubit index tokens for 3 qubits
+QUBIT_TOKENS = ["q0", "q1", "q2"]
 
 # Bit tokens for 0/1 in mapping spec
 BIT_TOKENS = ["0", "1"]
@@ -41,4 +45,8 @@ class Gate:
     targets: List[int]    # e.g., [0] or [0,1]
 
     def arity(self) -> int:
-        return 1 if self.gate_type in {"ID","X","Y","Z","H","S","T"} else 2
+        if self.gate_type in {"CX","CZ","SWAP"}:
+            return 2
+        if self.gate_type in {"CCX","CCZ","CSWAP"}:
+            return 3
+        return 1

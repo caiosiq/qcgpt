@@ -7,7 +7,7 @@ from .gates import Gate
 
 @dataclass
 class Circuit:
-    nqubits: int = 2
+    nqubits: int = 3
     gates: List[Gate] = field(default_factory=list)
 
     def add_gate(self, gate: Gate):
@@ -36,6 +36,9 @@ def apply_gate_to_bits(bits: np.ndarray, gate: Gate) -> np.ndarray:
         # for bit-level mapping they don't change the observed bits.
         pass
 
+    elif gt.startswith("RX_") or gt.startswith("RY_") or gt.startswith("RZ_"):
+        pass
+
     elif gt == "CX":
         c, t = qs
         if res[c] == 1:
@@ -51,6 +54,20 @@ def apply_gate_to_bits(bits: np.ndarray, gate: Gate) -> np.ndarray:
 
     elif gt == "ID":
         pass
+
+    elif gt == "CCX":
+        c1, c2, t = qs
+        if res[c1] == 1 and res[c2] == 1:
+            res[t] ^= 1
+
+    elif gt == "CCZ":
+        # Triple-controlled phase; no change in computational basis bits
+        pass
+
+    elif gt == "CSWAP":
+        c, a, b = qs
+        if res[c] == 1:
+            res[a], res[b] = res[b], res[a]
 
     else:
         raise ValueError(f"Unsupported gate type in classical sim: {gt}")

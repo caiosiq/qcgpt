@@ -75,7 +75,7 @@ def evaluate_single_task(
 
     # 5) Pretty-print everything
     print("=" * 60)
-    print("Amplitude-based mapping spec with 4 state pairs")
+    print("Amplitude-based mapping spec with basis pairs")
     print("-" * 60)
     print("Reference circuit (random task generator):")
     print(format_circuit(ref_circ))

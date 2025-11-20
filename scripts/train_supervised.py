@@ -49,7 +49,7 @@ def main():
     train_loader = build_simplified_dataloader(
         num_samples=args.num_samples,
         batch_size=args.batch_size,
-        n_qubits=2,
+        n_qubits=3,
         raw_max_depth=args.raw_max_depth,
         include_basis_states=True if args.basis_only else True,
         n_random_states=(0 if args.basis_only else args.n_random_states),

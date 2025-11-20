@@ -101,7 +101,7 @@ def build_supervised_dataloader(
 def build_simplified_dataloader(
     num_samples: int,
     batch_size: int,
-    n_qubits: int = 2,
+    n_qubits: int = 3,
     raw_max_depth: int = 8,
     include_basis_states: bool = True,
     n_random_states: int = 0,

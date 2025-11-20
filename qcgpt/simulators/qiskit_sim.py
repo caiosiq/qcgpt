@@ -41,6 +41,51 @@ def circuit_to_qiskit(circ: Circuit) -> QuantumCircuit:
             qc.cz(qs[0], qs[1])
         elif gt == "SWAP":
             qc.swap(qs[0], qs[1])
+        elif gt == "CCX":
+            qc.ccx(qs[0], qs[1], qs[2])
+        elif gt == "CSWAP":
+            qc.cswap(qs[0], qs[1], qs[2])
+        elif gt == "CCZ":
+            qc.h(qs[2]); qc.ccx(qs[0], qs[1], qs[2]); qc.h(qs[2])
+        elif gt.startswith("RX_"):
+            if gt == "RX_PI_16":
+                qc.rx(np.pi/16, qs[0])
+            elif gt == "RX_PI_8":
+                qc.rx(np.pi/8, qs[0])
+            elif gt == "RX_PI_4":
+                qc.rx(np.pi/4, qs[0])
+            elif gt == "RX_PI_2":
+                qc.rx(np.pi/2, qs[0])
+            elif gt == "RX_PI":
+                qc.rx(np.pi, qs[0])
+            else:
+                raise ValueError(f"Unsupported RX variant: {gt}")
+        elif gt.startswith("RY_"):
+            if gt == "RY_PI_16":
+                qc.ry(np.pi/16, qs[0])
+            elif gt == "RY_PI_8":
+                qc.ry(np.pi/8, qs[0])
+            elif gt == "RY_PI_4":
+                qc.ry(np.pi/4, qs[0])
+            elif gt == "RY_PI_2":
+                qc.ry(np.pi/2, qs[0])
+            elif gt == "RY_PI":
+                qc.ry(np.pi, qs[0])
+            else:
+                raise ValueError(f"Unsupported RY variant: {gt}")
+        elif gt.startswith("RZ_"):
+            if gt == "RZ_PI_16":
+                qc.rz(np.pi/16, qs[0])
+            elif gt == "RZ_PI_8":
+                qc.rz(np.pi/8, qs[0])
+            elif gt == "RZ_PI_4":
+                qc.rz(np.pi/4, qs[0])
+            elif gt == "RZ_PI_2":
+                qc.rz(np.pi/2, qs[0])
+            elif gt == "RZ_PI":
+                qc.rz(np.pi, qs[0])
+            else:
+                raise ValueError(f"Unsupported RZ variant: {gt}")
         else:
             raise ValueError(f"Unsupported gate type for Qiskit: {gt}")
 
@@ -62,6 +107,19 @@ def qiskit_to_circuit(qc: QuantumCircuit) -> Circuit:
             circ.add_gate(Gate(name.upper(), [qs[0]]))
         elif name in {"cx", "cz", "swap"}:
             circ.add_gate(Gate(name.upper(), [qs[0], qs[1]]))
+        elif name in {"ccx", "cswap", "ccz"}:
+            circ.add_gate(Gate(name.upper(), [qs[0], qs[1], qs[2]]))
+        elif name in {"rx", "ry", "rz"}:
+            theta = float(instr.operation.params[0])
+            angles = [np.pi/16, np.pi/8, np.pi/4, np.pi/2, np.pi]
+            tokens = {
+                "rx": ["RX_PI_16", "RX_PI_8", "RX_PI_4", "RX_PI_2", "RX_PI"],
+                "ry": ["RY_PI_16", "RY_PI_8", "RY_PI_4", "RY_PI_2", "RY_PI"],
+                "rz": ["RZ_PI_16", "RZ_PI_8", "RZ_PI_4", "RZ_PI_2", "RZ_PI"],
+            }
+            diffs = [abs(theta - a) for a in angles]
+            idx = int(np.argmin(diffs))
+            circ.add_gate(Gate(tokens[name][idx], [qs[0]]))
         elif name in {"barrier", "measure", "reset", "snapshot"}:
             continue
         else:

@@ -18,10 +18,10 @@ except Exception:
     AER_AVAILABLE = False
 
 
-def build_batch_specs(batch_size: int, max_gates_ref: int = 6):
+def build_batch_specs(batch_size: int, max_gates_ref: int = 6, n_qubits: int = 3):
     spec_list = []
     for _ in range(batch_size):
-        spec_tensor, _ = sample_task(max_gates=max_gates_ref)
+        spec_tensor, _ = sample_task(max_gates=max_gates_ref, n_qubits=n_qubits)
         spec_list.append(spec_tensor)
     spec_batch_np, spec_pad_mask_np = build_spec_sequence_batch(spec_list)
     spec_states_batch = np.stack(spec_list, axis=0)

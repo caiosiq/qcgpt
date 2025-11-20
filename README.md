@@ -3,8 +3,36 @@ QCGPT: Quantum Circuit Generation with Transformer Policies
 Overview
 
 - Goal: Given a specification of input→output quantum state pairs, generate a discrete quantum circuit that approximately implements the mapping while being as short/simple as possible.
-- Current scope: 2-qubit circuits using a small gate set: `ID, X, Y, Z, H, S, T, CX, CZ, SWAP`.
+- Current scope: 2-qubit circuits using a small gate set: `ID, X, Y, Z, H, S, T, RX_PI_16, RX_PI_8, RX_PI_4, RX_PI_2, RX_PI, RY_PI_16, RY_PI_8, RY_PI_4, RY_PI_2, RY_PI, RZ_PI_16, RZ_PI_8, RZ_PI_4, RZ_PI_2, RZ_PI, CX, CZ, SWAP`.
 - Approach: An encoder–decoder Transformer where the spec side is a continuous sequence (amplitudes) and the circuit side is a token sequence (gates + qubit indices). Supports supervised seq2seq training and REINFORCE.
+
+Architecture
+
+- Dataflow:
+  - Build amplitude spec from circuits or tasks → `spec_tensor` `[n_states, 2, 2^n, 2]`.
+  - Batch to continuous sequences → `build_spec_sequence_batch` → `spec_batch [B, L, 4]`, `spec_pad_mask [B, L]` (`qcgpt/data/specs.py:61-97`).
+  - Encode spec → `SpecEncoder` produces `enc_out [B, L, d_model]` (`qcgpt/models/transformer.py:6-25`).
+  - Decode circuit tokens → `CircuitDecoder` autoregressively produces logits over the vocabulary (`qcgpt/models/transformer.py:27-65`).
+  - Policy wrapper → `CircuitPolicy` wires encoder/decoder and adds sampling (`qcgpt/models/policy.py:9-23,25-59`).
+
+- Diagram:
+  - Spec Tensor `[n_states,2,n_basis,2]`
+    → `build_spec_sequence_batch` → `spec_batch [B,L,4]`, `spec_pad_mask [B,L]`
+    → `SpecEncoder` (`input_proj 4→d_model` + `pos_emb` + `TransformerEncoder`) → `enc_out [B,L,d_model]`
+    → `CircuitDecoder` (`token_emb` + `pos_emb` + `TransformerDecoder` with causal mask, memory=`enc_out`, memory_key_padding_mask=`spec_pad_mask`) → `logits [B,Lc,vocab]`
+    → `sample_circuit_tokens` (categorical sampling with EOS termination, PAD fill) → `seq tokens` → `tokens_to_circuit`
+
+- Transformer details:
+  - SpecEncoder: projects 4 features per timestep `(Re ψ_in, Im ψ_in, Re ψ_out, Im ψ_out)` to `d_model`, adds learned positional embeddings, and runs `n_layers` encoder blocks with `n_heads` (`qcgpt/models/transformer.py:6-25`).
+  - CircuitDecoder: token + positional embeddings, causal attention mask, target PAD masking, and cross-attention over the spec memory; outputs logits then projected to vocabulary (`qcgpt/models/transformer.py:27-65`).
+  - Policy sampling: initializes with `BOS_CIRC`, samples next token from `Categorical(softmax(logits))`, accumulates log-prob, stops at `EOS_CIRC` or `max_len`, pads with `PAD` (`qcgpt/models/policy.py:25-59`).
+
+- Training flows:
+  - Supervised: cross-entropy on next-token prediction, ignoring `PAD` (`qcgpt/training/supervised.py:44-82`). Checkpoints and loss CSV per run (`scripts/train_supervised.py:1-98`).
+  - RL fine-tuning: REINFORCE with baseline; reward combines fidelity and length penalty; optional Qiskit black-box fidelity with noise (`qcgpt/training/rl.py:99-145`, `qcgpt/training/rollouts.py:1-30`).
+
+- Tokens and grammar:
+  - Vocabulary contains gate tokens and qubit index tokens; decoder learns valid sequences but enforces PAD masking and EOS termination. Decoding is robust to arity and qubit tokens (`qcgpt/gates.py`, `qcgpt/encoding.py`).
 
 Problem Specification
 
@@ -189,6 +217,15 @@ Design Notes and Extensions
 - Continuous spec input avoids lossy tokenization of amplitudes; circuit side remains token-based for discrete gate synthesis.
 - Constrained decoding (future): enforce valid token grammars (gate → required qubit tokens) via masks.
 - More qubits: parameterize qubit tokens (`q0..q{n-1}`), increase `n_basis = 2^n`, and adapt batching/masks; note exponential growth in sequence length.
+
+Evaluation Grid
+
+- Grid and fidelity reporting:
+  - `scripts/eval_grid.py` renders a grid of reference vs reconstructed circuits and writes per-cell fidelities to `fidelities.csv`.
+  - Also writes `avg_fidelity.csv` with `mean_fid_ref` and `mean_fid_cand` over the grid (`scripts/eval_grid.py:137-149`).
+- Local runner (Windows-friendly):
+  - `python scripts/run_eval_grid.py` without CLI flags; customize via environment variables (`CKPT, NUM_ROWS, NUM_COLS, MAX_LEN, MAX_GATES, OUT_DIR, RUN_NAME`).
+  - Ensures `PYTHONPATH` includes repo root and normalizes Windows paths.
 - Advanced RL: actor-critic/PPO to reduce variance; learned value head; curriculum over gate count.
 - Noise models: integrate Qiskit noise for robust circuit generation; adjust rewards accordingly.
 - Beam search/top-k decoding: improve circuit quality and reduce degenerate tokens.

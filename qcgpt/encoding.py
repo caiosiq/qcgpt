@@ -51,21 +51,21 @@ def circuit_to_tokens(circ) -> List[int]:
 
 def tokens_to_circuit(tokens) -> "Circuit":
     """Inverse of circuit_to_tokens."""
-    from .gates import Gate
+    from .gates import Gate, GATE_TYPES
     from .circuits import Circuit
 
     # strip BOS/EOS
     # assume BOS_CIRC at pos 0, EOS somewhere later
     seq = [t for t in tokens if t != BOS_CIRC_ID and t != EOS_CIRC_ID]
 
-    circ = Circuit(nqubits=2)
+    circ = Circuit(nqubits=3)
     i = 0
     while i < len(seq):
         tok = ID_TO_TOKEN.get(seq[i], None)
         if tok is None:
             i += 1
             continue
-        if tok in {"X","Y","Z","H","S","T","ID"}:
+        if tok in GATE_TYPES and tok not in {"CX","CZ","SWAP","CCX","CCZ","CSWAP"}:
             if i + 1 >= len(seq):
                 break
             qtok = ID_TO_TOKEN.get(seq[i+1], "")
@@ -98,6 +98,30 @@ def tokens_to_circuit(tokens) -> "Circuit":
                 continue
             circ.add_gate(Gate(tok, [q1, q2]))
             i += 3
+        elif tok in {"CCX","CCZ","CSWAP"}:
+            if i + 3 >= len(seq):
+                break
+            qtok1 = ID_TO_TOKEN.get(seq[i+1], "")
+            qtok2 = ID_TO_TOKEN.get(seq[i+2], "")
+            qtok3 = ID_TO_TOKEN.get(seq[i+3], "")
+            if not (isinstance(qtok1, str) and qtok1.startswith("q")):
+                i += 1
+                continue
+            if not (isinstance(qtok2, str) and qtok2.startswith("q")):
+                i += 1
+                continue
+            if not (isinstance(qtok3, str) and qtok3.startswith("q")):
+                i += 1
+                continue
+            try:
+                q1 = int(qtok1[1])
+                q2 = int(qtok2[1])
+                q3 = int(qtok3[1])
+            except Exception:
+                i += 1
+                continue
+            circ.add_gate(Gate(tok, [q1, q2, q3]))
+            i += 4
         else:
             i += 1
             continue

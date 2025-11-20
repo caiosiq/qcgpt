@@ -32,7 +32,34 @@ def load_model(ckpt: str, device: torch.device) -> CircuitPolicy:
             state = torch.load(ckpt, map_location=device, weights_only=True)
         except TypeError:
             state = torch.load(ckpt, map_location=device)
-        model.load_state_dict(state["model_state_dict"])
+        sd = state["model_state_dict"]
+        try:
+            model.load_state_dict(sd)
+        except RuntimeError:
+            with torch.no_grad():
+                if "decoder.token_emb.weight" in sd:
+                    old_emb = sd["decoder.token_emb.weight"]
+                    new_emb = model.decoder.token_emb.weight
+                    n = min(old_emb.shape[0], new_emb.shape[0])
+                    new_emb[:n].copy_(old_emb[:n])
+                if "decoder.out_proj.weight" in sd:
+                    old_out_w = sd["decoder.out_proj.weight"]
+                    new_out_w = model.decoder.out_proj.weight
+                    n = min(old_out_w.shape[0], new_out_w.shape[0])
+                    new_out_w[:n].copy_(old_out_w[:n])
+                if "decoder.out_proj.bias" in sd:
+                    old_out_b = sd["decoder.out_proj.bias"]
+                    new_out_b = model.decoder.out_proj.bias
+                    n = min(old_out_b.shape[0], new_out_b.shape[0])
+                    new_out_b[:n].copy_(old_out_b[:n])
+            for k in [
+                "decoder.token_emb.weight",
+                "decoder.out_proj.weight",
+                "decoder.out_proj.bias",
+            ]:
+                if k in sd:
+                    del sd[k]
+            model.load_state_dict(sd, strict=False)
     model.eval()
     return model
 
@@ -99,7 +126,15 @@ def main():
     nrows, ncols = args.num_rows, args.num_cols
     fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(ncols*2.0, nrows*2.0))
     fig.tight_layout(pad=0.8)
+    if nrows == 1 and ncols == 1:
+        axes = np.array([[axes]])
+    elif nrows == 1:
+        axes = np.array([axes])
+    elif ncols == 1:
+        axes = np.array([[ax] for ax in axes])
 
+    fid_refs = []
+    fid_cands = []
     # For each cell, sample a task, reconstruct, compute fidelity, and render text
     for r in range(nrows):
         for c in range(ncols):
@@ -108,6 +143,8 @@ def main():
             cand_circ = tokens_to_circuit(seq)
             fid_ref = quantum_fidelity_from_spec(spec_tensor, ref_circ)
             fid_cand = quantum_fidelity_from_spec(spec_tensor, cand_circ)
+            fid_refs.append(fid_ref)
+            fid_cands.append(fid_cand)
 
             # Save CSV row
             with open(csv_path, "a", newline="") as f:
@@ -130,10 +167,19 @@ def main():
     fig_path = os.path.join(out_dir, "circuits_grid.png")
     fig.savefig(fig_path, dpi=200)
 
+    avg_csv = os.path.join(out_dir, "avg_fidelity.csv")
+    with open(avg_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["mean_fid_ref", "mean_fid_cand"]) 
+        mref = float(np.mean(fid_refs)) if len(fid_refs) > 0 else float("nan")
+        mcand = float(np.mean(fid_cands)) if len(fid_cands) > 0 else float("nan")
+        writer.writerow([f"{mref:.6f}", f"{mcand:.6f}"])
+
     # Also write a simple README-like text with summary counts
     # (kept minimal; no markdown creation beyond this file)
     print(f"Saved grid to {fig_path}")
     print(f"Saved fidelities CSV to {csv_path}")
+    print(f"Saved average fidelity CSV to {avg_csv}")
 
 
 if __name__ == "__main__":
