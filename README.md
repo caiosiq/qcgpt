@@ -2,9 +2,9 @@ QCGPT: Quantum Circuit Generation with Transformer Policies
 
 Overview
 
-- Goal: Given a specification of input→output quantum state pairs, generate a discrete quantum circuit that approximately implements the mapping while being as short/simple as possible.
-- Current scope: 2-qubit circuits using a small gate set: `ID, X, Y, Z, H, S, T, RX_PI_16, RX_PI_8, RX_PI_4, RX_PI_2, RX_PI, RY_PI_16, RY_PI_8, RY_PI_4, RY_PI_2, RY_PI, RZ_PI_16, RZ_PI_8, RZ_PI_4, RZ_PI_2, RZ_PI, CX, CZ, SWAP`.
-- Approach: An encoder–decoder Transformer where the spec side is a continuous sequence (amplitudes) and the circuit side is a token sequence (gates + qubit indices). Supports supervised seq2seq training and REINFORCE.
+ - Goal: Given a specification of input→output quantum state pairs, generate a discrete quantum circuit that approximately implements the mapping while being as short/simple as possible.
+ - Current scope: 3-qubit circuits using a small gate set: `ID, X, Y, Z, H, S, T, RX_PI_16, RX_PI_8, RX_PI_4, RX_PI_2, RX_PI, RY_PI_16, RY_PI_8, RY_PI_4, RY_PI_2, RY_PI, RZ_PI_16, RZ_PI_8, RZ_PI_4, RZ_PI_2, RZ_PI, CX, CZ, SWAP, CCX, CCZ, CSWAP`.
+ - Approach: An encoder–decoder Transformer where the spec side is a continuous sequence (amplitudes) and the circuit side is a token sequence (gates + qubit indices). Supports supervised seq2seq training and REINFORCE.
 
 Architecture
 
