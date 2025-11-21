@@ -15,22 +15,25 @@ conda activate qcgpt
 cd /orcd/home/002/caiosiq/qcgpt || cd /home/caiosiq/qcgpt
 export PYTHONPATH=/orcd/home/002/caiosiq/qcgpt:/home/caiosiq/qcgpt:$PYTHONPATH
 
-# Parameters (override via environment: PREFIX, RUN_NAME, CKPT_PATH, EPOCHS, SAMPLES, BATCH, RAWDEPTH)
 PREFIX=${PREFIX:-transformer_v1}
 RUN_NAME=${RUN_NAME:-$(date +%Y%m%d_%H%M%S)}
 OUT_DIR=model_checkpoints
-EPOCHS=${EPOCHS:-100}
-SAMPLES=${SAMPLES:-10000}
-BATCH=${BATCH:-64}
-RAWDEPTH=${RAWDEPTH:-16}
+EPOCHS=${EPOCHS:-300}
+SAMPLES=${SAMPLES:-20000}
+BATCH=${BATCH:-256}
+RAWDEPTH=${RAWDEPTH:-32}
+BASIS_ONLY=${BASIS_ONLY:-1}
+N_RANDOM=${N_RANDOM:-0}
+CKPT_PATH=/home/caiosiq/qcgpt/model_checkpoints/20251121_003310/transformer_v1_best.pt
 
 python3 scripts/train_supervised.py \
   --num_epochs ${EPOCHS} \
   --num_samples ${SAMPLES} \
   --batch_size ${BATCH} \
   --raw_max_depth ${RAWDEPTH} \
-  ${CKPT_PATH:+--ckpt ${CKPT_PATH}} \
-  --basis_only \
+  $( [ -n "${CKPT_PATH}" ] && echo "--ckpt ${CKPT_PATH}" ) \
+  $( [ "$BASIS_ONLY" = "1" ] && echo "--basis_only" ) \
+  --n_random_states ${N_RANDOM} \
   --out_dir ${OUT_DIR} \
   --run_name ${RUN_NAME} \
   --prefix ${PREFIX}

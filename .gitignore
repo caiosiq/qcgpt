@@ -1,1 +1,3 @@
 batch_jobs/logs/*
+model_checkpoints/*
+model_evaluations/*

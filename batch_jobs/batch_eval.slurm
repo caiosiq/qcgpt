@@ -22,7 +22,7 @@ pip install --no-input --quiet pylatexenc || true
 # CKPT, RUN_NAME, NUM_ROWS, NUM_COLS, MAX_LEN, MAX_GATES, OUT_DIR
 OUT_DIR=${OUT_DIR:-model_evaluations}
 RUN_NAME=${RUN_NAME:-$(date +%Y%m%d_%H%M%S)}
-CKPT=${CKPT:-model_checkpoints/20251119_015504/transformer_v1_best.pt}
+CKPT=${CKPT:-model_checkpoints/20251121_103655/transformer_v1_best.pt}
 NUM_ROWS=${NUM_ROWS:-16}
 NUM_COLS=${NUM_COLS:-16}
 MAX_LEN=${MAX_LEN:-32}

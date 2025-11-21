@@ -12,6 +12,7 @@ from qcgpt.training.supervised import (
 )
 from qcgpt.models.policy import CircuitPolicy
 from qcgpt.gates import VOCAB
+import re
 
 
 def main():
@@ -41,7 +42,10 @@ def main():
     ).to(device)
 
     if args.ckpt is not None and os.path.exists(args.ckpt):
-        state = torch.load(args.ckpt, map_location=device)
+        try:
+            state = torch.load(args.ckpt, map_location=device, weights_only=True)
+        except TypeError:
+            state = torch.load(args.ckpt, map_location=device)
         model.load_state_dict(state["model_state_dict"])
 
     optimizer = optim.AdamW(model.parameters(), lr=3e-4)
@@ -85,8 +89,22 @@ def main():
             best_path = os.path.join(run_dir, f"{args.prefix}_best.pt")
             torch.save({"model_state_dict": model.state_dict()}, best_path)
 
-    final_path = os.path.join(run_dir, f"{args.prefix}_final.pt")
-    torch.save({"model_state_dict": model.state_dict()}, final_path)
+        if epoch % 10 == 0:
+            e_path = os.path.join(run_dir, f"{args.prefix}_e{epoch}.pt")
+            torch.save({"model_state_dict": model.state_dict()}, e_path)
+            files = [f for f in os.listdir(run_dir) if f.startswith(f"{args.prefix}_e") and f.endswith(".pt")]
+            def parse_e(f):
+                m = re.search(r"_e(\d+)\.pt$", f)
+                return int(m.group(1)) if m else -1
+            files_sorted = sorted(files, key=parse_e)
+            while len(files_sorted) > 3:
+                old = files_sorted.pop(0)
+                try:
+                    os.remove(os.path.join(run_dir, old))
+                except FileNotFoundError:
+                    pass
+
+    
 
 
 if __name__ == "__main__":

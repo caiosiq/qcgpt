@@ -25,6 +25,9 @@ def random_reference_circuit(max_gates: int = 6, n_qubits: int = 3) -> Circuit:
         if gt in {"CX", "CZ", "SWAP"}:
             qs = list(np.random.choice(range(n_qubits), size=2, replace=False))
             circ.add_gate(Gate(gt, qs))
+        elif gt in {"CCX", "CCZ", "CSWAP"}:
+            qs = list(np.random.choice(range(n_qubits), size=3, replace=False))
+            circ.add_gate(Gate(gt, qs))
         else:
             q = np.random.randint(0, n_qubits)
             circ.add_gate(Gate(gt, [q]))

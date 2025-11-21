@@ -42,10 +42,16 @@ def circuit_to_qiskit(circ: Circuit) -> QuantumCircuit:
         elif gt == "SWAP":
             qc.swap(qs[0], qs[1])
         elif gt == "CCX":
+            if len(qs) < 3:
+                continue
             qc.ccx(qs[0], qs[1], qs[2])
         elif gt == "CSWAP":
+            if len(qs) < 3:
+                continue
             qc.cswap(qs[0], qs[1], qs[2])
         elif gt == "CCZ":
+            if len(qs) < 3:
+                continue
             qc.h(qs[2]); qc.ccx(qs[0], qs[1], qs[2]); qc.h(qs[2])
         elif gt.startswith("RX_"):
             if gt == "RX_PI_16":
