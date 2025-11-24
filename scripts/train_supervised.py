@@ -1,6 +1,7 @@
 # scripts/train_supervised.py
 import torch
 import torch.optim as optim
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR
 import os
 import argparse
 import time
@@ -27,6 +28,16 @@ def main():
     parser.add_argument("--out_dir", type=str, default="model_checkpoints")
     parser.add_argument("--run_name", type=str, default=None)
     parser.add_argument("--prefix", type=str, default="transformer_v1")
+    parser.add_argument("--use_unitary_loss", action="store_true")
+    parser.add_argument("--lambda_sup", type=float, default=1.0)
+    parser.add_argument("--lambda_U", type=float, default=0.0)
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--scheduler", type=str, default="none", choices=["none","cosine","step","exp"]) 
+    parser.add_argument("--t_max", type=int, default=50)  # for cosine
+    parser.add_argument("--step_size", type=int, default=50)  # for step
+    parser.add_argument("--gamma", type=float, default=0.5)  # for step/exp
+    parser.add_argument("--mem_log_interval", type=int, default=0)  # 0 disables per-batch GPU mem logging
+    parser.add_argument("--softmax_temp", type=float, default=1.0)
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -48,7 +59,14 @@ def main():
             state = torch.load(args.ckpt, map_location=device)
         model.load_state_dict(state["model_state_dict"])
 
-    optimizer = optim.AdamW(model.parameters(), lr=3e-4)
+    optimizer = optim.AdamW(model.parameters(), lr=args.lr)
+    scheduler = None
+    if args.scheduler == "cosine":
+        scheduler = CosineAnnealingLR(optimizer, T_max=args.t_max)
+    elif args.scheduler == "step":
+        scheduler = StepLR(optimizer, step_size=args.step_size, gamma=args.gamma)
+    elif args.scheduler == "exp":
+        scheduler = ExponentialLR(optimizer, gamma=args.gamma)
 
     train_loader = build_simplified_dataloader(
         num_samples=args.num_samples,
@@ -57,7 +75,8 @@ def main():
         raw_max_depth=args.raw_max_depth,
         include_basis_states=True if args.basis_only else True,
         n_random_states=(0 if args.basis_only else args.n_random_states),
-        num_workers=0,
+        num_workers=16,
+        pin_memory=True,
     )
 
     best_loss = float("inf")
@@ -67,9 +86,21 @@ def main():
     run_dir = os.path.join(args.out_dir, run_name)
     os.makedirs(run_dir, exist_ok=True)
     loss_csv = os.path.join(run_dir, f"{args.prefix}_loss.csv")
+    config_txt = os.path.join(run_dir, f"{args.prefix}_config.txt")
     with open(loss_csv, "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(["epoch", "loss"]) 
+    with open(config_txt, "w") as f:
+        f.write(f"use_unitary_loss={args.use_unitary_loss}\n")
+        f.write(f"lambda_sup={args.lambda_sup}\n")
+        f.write(f"lambda_U={args.lambda_U}\n")
+        f.write(f"raw_max_depth={args.raw_max_depth}\n")
+        f.write(f"lr={args.lr}\n")
+        f.write(f"scheduler={args.scheduler}\n")
+        f.write(f"t_max={args.t_max}\n")
+        f.write(f"step_size={args.step_size}\n")
+        f.write(f"gamma={args.gamma}\n")
+        f.write(f"softmax_temp={args.softmax_temp}\n")
 
     for epoch in range(1, args.num_epochs + 1):
         train_loss = train_supervised_epoch(
@@ -77,8 +108,14 @@ def main():
             dataloader=train_loader,
             optimizer=optimizer,
             device=device,
+            use_unitary_loss=args.use_unitary_loss,
+            lambda_sup=args.lambda_sup,
+            lambda_U=args.lambda_U,
+            softmax_temp=args.softmax_temp,
         )
-        print(f"[Supervised] Epoch {epoch:03d}  TrainLoss={train_loss:.4f}")
+        if scheduler is not None:
+            scheduler.step()
+        print(f"[Supervised] Epoch {epoch:03d}  TrainLoss={train_loss:.4f}  LR={optimizer.param_groups[0]['lr']:.6f}")
 
         with open(loss_csv, "a", newline="") as f:
             writer = csv.writer(f)

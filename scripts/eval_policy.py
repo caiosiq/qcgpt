@@ -47,21 +47,41 @@ def evaluate_single_task(
     max_len: int = 32,
     max_gates_ref: int = 6,
     use_qiskit: bool = True,
+    decode_strategy: str = "greedy",
+    beam_width: int = 5,
+    top_k: int = 5,
+    top_p: float = 0.9,
 ):
     spec_tensor, ref_circ = sample_task(max_gates=max_gates_ref)
     spec_batch_np, spec_pad_mask_np = build_spec_sequence_batch([spec_tensor])
     spec_batch = torch.tensor(spec_batch_np, dtype=torch.float32, device=device)
     spec_pad_mask = torch.tensor(spec_pad_mask_np, dtype=torch.bool, device=device)
 
-    # 3) Sample circuit tokens from policy
-    with torch.no_grad():
-        sampled_tokens, log_probs = model.sample_circuit_tokens(
-            spec_batch=spec_batch,
-            spec_pad_mask=spec_pad_mask,
-            bos_id=BOS_CIRC_ID,
-            eos_id=EOS_CIRC_ID,
-            max_len=max_len,
-        )
+    # 3) Sample circuit tokens from policy using selected strategy
+    if decode_strategy == "greedy":
+        with torch.no_grad():
+            sampled_tokens, _ = model.sample_circuit_tokens(
+                spec_batch=spec_batch,
+                spec_pad_mask=spec_pad_mask,
+                bos_id=BOS_CIRC_ID,
+                eos_id=EOS_CIRC_ID,
+                max_len=max_len,
+            )
+    elif decode_strategy == "beam":
+        sampled_tokens = beam_search_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, beam_width=beam_width)
+    elif decode_strategy == "topk":
+        sampled_tokens = top_k_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, k=top_k)
+    elif decode_strategy == "topp":
+        sampled_tokens = top_p_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, p=top_p)
+    else:
+        with torch.no_grad():
+            sampled_tokens, _ = model.sample_circuit_tokens(
+                spec_batch=spec_batch,
+                spec_pad_mask=spec_pad_mask,
+                bos_id=BOS_CIRC_ID,
+                eos_id=EOS_CIRC_ID,
+                max_len=max_len,
+            )
     seq = sampled_tokens[0].tolist()
     # remove padding
     seq = [t for t in seq if t != PAD_ID]
@@ -81,7 +101,7 @@ def evaluate_single_task(
     print(format_circuit(ref_circ))
     print(f"  Classical acc: {acc_ref:.3f}  |  Quantum fid: {fid_ref:.3f}  |  Gates: {gc_ref}")
     print("-" * 60)
-    print("QCGPT proposed circuit:")
+    print(f"QCGPT proposed circuit (decode={decode_strategy}):")
     print(format_circuit(candidate_circ))
     print(f"  Classical acc: {acc_cand:.3f}  |  Quantum fid: {fid_cand:.3f}  |  Gates: {gc_cand}")
     print("=" * 60)
@@ -119,6 +139,10 @@ def main():
         action="store_true",
         help="Skip Qiskit quantum fidelity computation (faster).",
     )
+    parser.add_argument("--decode_strategy", type=str, default="greedy", choices=["greedy","beam","topk","topp"])
+    parser.add_argument("--beam_width", type=int, default=5)
+    parser.add_argument("--top_k", type=int, default=5)
+    parser.add_argument("--top_p", type=float, default=0.9)
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -138,8 +162,13 @@ def main():
             max_len=args.max_len,
             max_gates_ref=args.max_gates_ref,
             use_qiskit=use_qiskit,
+            decode_strategy=args.decode_strategy,
+            beam_width=args.beam_width,
+            top_k=args.top_k,
+            top_p=args.top_p,
         )
 
 
 if __name__ == "__main__":
     main()
+from qcgpt.decoding import beam_search_decode, top_k_decode, top_p_decode

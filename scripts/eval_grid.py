@@ -16,6 +16,7 @@ from qcgpt.encoding import tokens_to_circuit
 from qcgpt.evaluation.metrics import quantum_fidelity_from_spec
 from qcgpt.evaluation.visualize import format_circuit
 from qcgpt.simulators.qiskit_sim import circuit_to_qiskit
+from qcgpt.decoding import beam_search_decode, top_k_decode, top_p_decode
 
 
 def load_model(ckpt: str, device: torch.device) -> CircuitPolicy:
@@ -65,18 +66,38 @@ def load_model(ckpt: str, device: torch.device) -> CircuitPolicy:
 
 
 @torch.no_grad()
-def reconstruct_circuit(model: CircuitPolicy, device: torch.device, spec_tensor: np.ndarray, max_len: int) -> list:
+def reconstruct_circuit(model: CircuitPolicy, device: torch.device, spec_tensor: np.ndarray, max_len: int,
+                        decode_strategy: str = "greedy", beam_width: int = 5, top_k: int = 5, top_p: float = 0.9) -> list:
     spec_batch_np, spec_pad_mask_np = build_spec_sequence_batch([spec_tensor])
     spec_batch = torch.tensor(spec_batch_np, dtype=torch.float32, device=device)
     spec_pad_mask = torch.tensor(spec_pad_mask_np, dtype=torch.bool, device=device)
-    tokens, _ = model.sample_circuit_tokens(
-        spec_batch=spec_batch,
-        spec_pad_mask=spec_pad_mask,
-        bos_id=BOS_CIRC_ID,
-        eos_id=EOS_CIRC_ID,
-        max_len=max_len,
-    )
-    seq = [t for t in tokens[0].tolist() if t != PAD_ID]
+    if decode_strategy == "greedy":
+        tokens, _ = model.sample_circuit_tokens(
+            spec_batch=spec_batch,
+            spec_pad_mask=spec_pad_mask,
+            bos_id=BOS_CIRC_ID,
+            eos_id=EOS_CIRC_ID,
+            max_len=max_len,
+        )
+        seq = [t for t in tokens[0].tolist() if t != PAD_ID]
+    elif decode_strategy == "beam":
+        tokens = beam_search_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, beam_width=beam_width)
+        seq = [t for t in tokens[0].tolist() if t != PAD_ID]
+    elif decode_strategy == "topk":
+        tokens = top_k_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, k=top_k)
+        seq = [t for t in tokens[0].tolist() if t != PAD_ID]
+    elif decode_strategy == "topp":
+        tokens = top_p_decode(model, spec_batch, spec_pad_mask, max_len=max_len, bos_id=BOS_CIRC_ID, eos_id=EOS_CIRC_ID, p=top_p)
+        seq = [t for t in tokens[0].tolist() if t != PAD_ID]
+    else:
+        tokens, _ = model.sample_circuit_tokens(
+            spec_batch=spec_batch,
+            spec_pad_mask=spec_pad_mask,
+            bos_id=BOS_CIRC_ID,
+            eos_id=EOS_CIRC_ID,
+            max_len=max_len,
+        )
+        seq = [t for t in tokens[0].tolist() if t != PAD_ID]
     return seq
 
 
@@ -107,6 +128,10 @@ def main():
     parser.add_argument("--max_gates_ref", type=int, default=6)
     parser.add_argument("--out_dir", type=str, default="model_evaluations")
     parser.add_argument("--run_name", type=str, default=None)
+    parser.add_argument("--decode_strategy", type=str, default="greedy", choices=["greedy","beam","topk","topp"])
+    parser.add_argument("--beam_width", type=int, default=5)
+    parser.add_argument("--top_k", type=int, default=5)
+    parser.add_argument("--top_p", type=float, default=0.9)
     args = parser.parse_args()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -139,7 +164,13 @@ def main():
     for r in range(nrows):
         for c in range(ncols):
             spec_tensor, ref_circ = sample_task(max_gates=args.max_gates_ref)
-            seq = reconstruct_circuit(model, device, spec_tensor, args.max_len)
+            seq = reconstruct_circuit(
+                model, device, spec_tensor, args.max_len,
+                decode_strategy=args.decode_strategy,
+                beam_width=args.beam_width,
+                top_k=args.top_k,
+                top_p=args.top_p,
+            )
             cand_circ = tokens_to_circuit(seq)
             fid_ref = quantum_fidelity_from_spec(spec_tensor, ref_circ)
             fid_cand = quantum_fidelity_from_spec(spec_tensor, cand_circ)

@@ -7,6 +7,9 @@ from qiskit import QuantumCircuit
 from .qiskit_utils import sample_task, sample_random_qiskit_circuit, simplify_qiskit_circuit
 from ..simulators.qiskit_sim import qiskit_to_circuit
 from ..encoding import circuit_to_tokens
+from ..unitaries import build_circuit_unitary
+import hashlib
+import torch
 
 class MappingCircuitDataset(Dataset):
     def __init__(self, size: int, max_gates: int = 6):
@@ -61,9 +64,17 @@ class SimplifiedCircuitDataset(Dataset):
         self.max_len = max_len
         self.include_basis_states = include_basis_states
         self.n_random_states = n_random_states
+        self._seen_hashes = set()
+        self._dedupe_skips = 0
 
     def __len__(self):
         return self.num_samples
+
+    def _unitary_hash(self, U: torch.Tensor, tol: float = 1e-6) -> str:
+        Ur = torch.round(U.real / tol) * tol
+        Ui = torch.round(U.imag / tol) * tol
+        arr = torch.stack([Ur, Ui], dim=-1).cpu().numpy()
+        return hashlib.sha1(arr.tobytes()).hexdigest()
 
     def _sample_valid_simplified(self) -> Dict[str, object]:
         """
@@ -86,6 +97,14 @@ class SimplifiedCircuitDataset(Dataset):
                 continue
             if L < self.min_len:
                 continue
+            U = build_circuit_unitary(circ_simp, n_qubits=self.n_qubits)
+            h = self._unitary_hash(U)
+            if not hasattr(self, "_seen_hashes"):
+                self._seen_hashes = set()
+            if h in self._seen_hashes:
+                self._dedupe_skips += 1
+                continue
+            self._seen_hashes.add(h)
             # Build spec from simplified circuit
             from .qiskit_utils import build_spec_from_circuit
             spec_tensor = build_spec_from_circuit(
@@ -111,10 +130,20 @@ class SimplifiedCircuitDataset(Dataset):
             n_random_states=self.n_random_states,
         )
         circ_tokens = circuit_to_tokens(fallback_circ)
+        U = build_circuit_unitary(fallback_circ, n_qubits=self.n_qubits)
+        h = self._unitary_hash(U)
+        if not hasattr(self, "_seen_hashes"):
+            self._seen_hashes = set()
+        if h in self._seen_hashes:
+            # As last resort, return a minimal item without dedupe
+            pass
+        else:
+            self._seen_hashes.add(h)
         return {
             "spec_tensor": torch.tensor(spec_tensor, dtype=torch.float32),
             "circ_tokens": torch.tensor(circ_tokens, dtype=torch.long),
             "ref_circuit": fallback_circ,
+            "dedupe_skips": self._dedupe_skips,
         }
 
     def __getitem__(self, idx: int) -> Dict[str, object]:

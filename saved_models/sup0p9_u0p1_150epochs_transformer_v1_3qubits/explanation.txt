@@ -1,0 +1,3 @@
+This model is a 3 qubit transformer encoder-decoder trained for around 150 epochs. Current average fidelity is 0.79, with more gates, more methods of error, also stashing circuits to make sure we are not giving two circuits with the same unitary
+
+Inference method is done using top_k
