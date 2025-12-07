@@ -1,9 +1,0 @@
-use_unitary_loss=True
-lambda_sup=0.9
-lambda_U=0.1
-raw_max_depth=32
-lr=0.0001
-scheduler=cosine
-t_max=100
-step_size=50
-gamma=0.5
