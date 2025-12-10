@@ -1,0 +1,1 @@
+This model is a 3 qubit transformer encoder-decoder trained for around 150 epochs. Current average fidelity is 0.839

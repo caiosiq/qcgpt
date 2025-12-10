@@ -1,0 +1,14 @@
+------------------------------------------------
+Running Section 5.3: Algorithm Synthesis
+Model: transformer_v2_best.pt
+------------------------------------------------
+Using device: cuda
+Loading model from model_checkpoints/qcgpt2_mid_20251204_095733/transformer_v2_best.pt...
+Synthesizing QFT-3...
+  > Fidelity: 0.1343
+Synthesizing Toffoli...
+  > Fidelity: 1.0000
+Synthesizing GHZ Prep...
+  > Fidelity: 1.0000
+Saved algorithm synthesis plot to evaluations_models/results_section_5_3/generated_algorithms.png
+Done.

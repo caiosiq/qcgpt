@@ -1,258 +1,537 @@
-QCGPT: Quantum Circuit Generation with Transformer Policies
+# QCGPT: Quantum Circuit Generation with Transformer Policies
 
-Overview
+## Overview
 
- - Goal: Given a specification of input→output quantum state pairs, generate a discrete quantum circuit that approximately implements the mapping while being as short/simple as possible.
- - Current scope: 3-qubit circuits using a small gate set: `ID, X, Y, Z, H, S, T, RX_PI_16, RX_PI_8, RX_PI_4, RX_PI_2, RX_PI, RY_PI_16, RY_PI_8, RY_PI_4, RY_PI_2, RY_PI, RZ_PI_16, RZ_PI_8, RZ_PI_4, RZ_PI_2, RZ_PI, CX, CZ, SWAP, CCX, CCZ, CSWAP`.
- - Approach: An encoder–decoder Transformer where the spec side is a continuous sequence (amplitudes) and the circuit side is a token sequence (gates + qubit indices). Supports supervised seq2seq training and REINFORCE.
+**Goal**: Given a specification of input→output quantum state pairs, generate a discrete quantum circuit that approximately implements the mapping while being as short/simple as possible.
 
-Architecture
+**Current scope**: 3-qubit circuits using a comprehensive gate set including standard gates (ID, X, Y, Z, H, S, T), fine-angle rotations (RX/RY/RZ with π/16, π/8, π/4, π/2), and multi-qubit gates (CX, CZ, SWAP, CCX, CCZ, CSWAP).
 
-- Dataflow:
-  - Build amplitude spec from circuits or tasks → `spec_tensor` `[n_states, 2, 2^n, 2]`.
-  - Batch to continuous sequences → `build_spec_sequence_batch` → `spec_batch [B, L, 4]`, `spec_pad_mask [B, L]` (`qcgpt/data/specs.py:61-97`).
-  - Encode spec → `SpecEncoder` produces `enc_out [B, L, d_model]` (`qcgpt/models/transformer.py:6-25`).
-  - Decode circuit tokens → `CircuitDecoder` autoregressively produces logits over the vocabulary (`qcgpt/models/transformer.py:27-65`).
-  - Policy wrapper → `CircuitPolicy` wires encoder/decoder and adds sampling (`qcgpt/models/policy.py:9-23,25-59`).
+**Approach**: An encoder–decoder Transformer where the spec side is a continuous sequence (amplitudes) and the circuit side is a token sequence. Supports supervised seq2seq training with advanced features like temperature annealing, separate encoder/decoder learning rates, and unitary reconstruction loss.
 
-- Diagram:
-  - Spec Tensor `[n_states,2,n_basis,2]`
-    → `build_spec_sequence_batch` → `spec_batch [B,L,4]`, `spec_pad_mask [B,L]`
-    → `SpecEncoder` (`input_proj 4→d_model` + `pos_emb` + `TransformerEncoder`) → `enc_out [B,L,d_model]`
-    → `CircuitDecoder` (`token_emb` + `pos_emb` + `TransformerDecoder` with causal mask, memory=`enc_out`, memory_key_padding_mask=`spec_pad_mask`) → `logits [B,Lc,vocab]`
-    → `sample_circuit_tokens` (categorical sampling with EOS termination, PAD fill) → `seq tokens` → `tokens_to_circuit`
+---
 
-- Transformer details:
-  - SpecEncoder: projects 4 features per timestep `(Re ψ_in, Im ψ_in, Re ψ_out, Im ψ_out)` to `d_model`, adds learned positional embeddings, and runs `n_layers` encoder blocks with `n_heads` (`qcgpt/models/transformer.py:6-25`).
-  - CircuitDecoder: token + positional embeddings, causal attention mask, target PAD masking, and cross-attention over the spec memory; outputs logits then projected to vocabulary (`qcgpt/models/transformer.py:27-65`).
-  - Policy sampling: initializes with `BOS_CIRC`, samples next token from `Categorical(softmax(logits))`, accumulates log-prob, stops at `EOS_CIRC` or `max_len`, pads with `PAD` (`qcgpt/models/policy.py:25-59`).
+## Project Structure
 
-- Training flows:
-  - Supervised: cross-entropy on next-token prediction, ignoring `PAD` (`qcgpt/training/supervised.py:44-82`). Checkpoints and loss CSV per run (`scripts/train_supervised.py:1-98`).
-  - RL fine-tuning: REINFORCE with baseline; reward combines fidelity and length penalty; optional Qiskit black-box fidelity with noise (`qcgpt/training/rl.py:99-145`, `qcgpt/training/rollouts.py:1-30`).
+The codebase contains two main versions:
 
-- Tokens and grammar:
-  - Vocabulary contains gate tokens and qubit index tokens; decoder learns valid sequences but enforces PAD masking and EOS termination. Decoding is robust to arity and qubit tokens (`qcgpt/gates.py`, `qcgpt/encoding.py`).
+### QCGPT1 (`qcgpt1/`)
+- Original architecture with separate gate and qubit tokens
+- Legacy implementation for reference
 
-Problem Specification
+### QCGPT2 (`qcgpt2/`) - **Current Active Version**
+- **Improved tokenization**: Gate-with-target tokens (e.g., `X_0`, `CX_0_1`, `CCX_0_1_2`)
+- **Unitary-based training**: Direct unitary matrix reconstruction loss
+- **Advanced training features**: Temperature annealing, separate encoder/decoder learning rates
+- **Better canonicalization**: Automatic gate target ordering and canonical forms
 
-- Spec tensor represents full quantum states over the computational basis.
-- Shape: `spec_tensor ∈ ℝ^{n_states × 2 × 2^{n_qubits} × 2}`
-  - `n_states`: number of pairs used for supervision/evaluation (e.g., 4 for two-qubit basis inputs).
-  - Second dim size 2: index 0 is input state, index 1 is output state.
-  - `2^{n_qubits}`: number of basis vectors in the Hilbert space.
-  - Last dim size 2: `[real, imag]` per amplitude.
-- Semantics:
-  - `spec[i, 0, j, 0] = Re(ψ_in^(i)[j])`, `spec[i, 0, j, 1] = Im(ψ_in^(i)[j])`
-  - `spec[i, 1, j, 0] = Re(ψ_out^(i)[j])`, `spec[i, 1, j, 1] = Im(ψ_out^(i)[j])`
-- Basis ordering: Qiskit computational basis, e.g. for 2 qubits indices 0..3 map to `|00>,|01>,|10>,|11>`.
-- Primary helpers:
-  - Build spec from Qiskit states: `qcgpt/data/specs.py:1-33`.
-  - Inverse helper for validation: `qcgpt/data/specs.py:35-58`.
-  - Batch spec into continuous sequences: `qcgpt/data/specs.py:60-97`.
+**Key QCGPT2 Files:**
+- `gates2.py`: Gate+target vocabulary and token mappings
+- `gate_registry2.py`: Gate canonicalization and vocabulary building
+- `circuits2.py`: `Circuit2` and `Gate2` classes
+- `encoding2.py`: Token ↔ circuit conversions
+- `unitaries2.py`: Exact unitary matrices for all gates
+- `models2/transformer.py`: `SpecEncoder` and `CircuitDecoder2`
+- `models2/policy.py`: `CircuitPolicy2` wrapper
+- `training2/supervised.py`: Supervised training with unitary loss
+- `scripts2/train_supervised2.py`: Main training script with resume support
+- `scripts2/eval_policy2.py`: Model evaluation
+- `scripts2/eval_grid2.py`: Grid-based evaluation
 
-Tokenization (Circuit Side)
+---
 
-- Vocabulary: special tokens, gate tokens, and qubit index tokens.
-- Special tokens: `PAD, BOS_SPEC, EOS_SPEC, BOS_CIRC, EOS_CIRC, '->', ';'` (`qcgpt/gates.py:13-19`).
-- Gate tokens: `ID, X, Y, Z, H, S, T, CX, CZ, SWAP` (`qcgpt/gates.py:5-11`).
-- Qubit tokens: for 2 qubits: `q0, q1` (`qcgpt/gates.py:21-23`).
-- Circuit tokenization:
-  - `circuit_to_tokens(circ)`: `BOS_CIRC`, then `GATE` followed by qubit indices, then `EOS_CIRC` (`qcgpt/encoding.py:35-50`).
-  - `tokens_to_circuit(tokens)`: robust decoding with arity checks and qubit token validation (`qcgpt/encoding.py:52-79`).
+## Architecture
 
-Data Generation
+### Dataflow
 
-- Random reference circuits: `qcgpt/data/qiskit_utils.py:16-25`.
-- Convert circuit to Qiskit and build amplitude spec using basis inputs: `qcgpt/data/qiskit_utils.py:27-33`.
-- Dataset items: `{"spec_tensor": float32 tensor, "ref_circuit": Circuit}` (`qcgpt/data/dataset.py:17-22`).
+1. **Spec Construction**: Build amplitude spec from circuits → `spec_tensor` `[n_states, 2, 2^n, 2]`
+2. **Batching**: Convert to continuous sequences → `spec_batch [B, L, 4]`, `spec_pad_mask [B, L]`
+3. **Encoding**: `SpecEncoder` produces `enc_out [B, L, d_model]`
+4. **Decoding**: `CircuitDecoder2` autoregressively produces logits over vocabulary
+5. **Sampling**: Policy wrapper generates circuit tokens with EOS termination
 
-Model Architecture
+### Transformer Components
 
-- Continuous Spec Encoder (`SpecEncoder`): `qcgpt/models/transformer.py:6-31`
-  - Input: `spec_batch ∈ ℝ^{B × L_spec_max × 4}` where each timestep holds `(Re ψ_in, Im ψ_in, Re ψ_out, Im ψ_out)` for a `(state, basis)` pair.
-  - Projection: `input_proj: ℝ^4 → ℝ^{d_model}`.
-  - Positional embedding: learnable `[max_len, d_model]` added to inputs.
-  - Transformer encoder: `n_layers`, `n_heads`, feedforward `4× d_model`, batch-first.
-  - Padding mask: `spec_pad_mask ∈ {False,True}^{B×L}`, used as `src_key_padding_mask` to ignore padded steps.
-  - Output: `enc_out ∈ ℝ^{B × L_spec_max × d_model}`.
+**SpecEncoder** (`qcgpt2/models2/transformer.py`):
+- Input: `spec_batch ∈ ℝ^{B × L_spec_max × 4}` (Re/Im amplitudes for input/output states)
+- Projects 4 features → `d_model` via learned linear layer
+- Adds learned positional embeddings
+- `n_layers` Transformer encoder blocks with `n_heads` attention
+- Output: `enc_out ∈ ℝ^{B × L_spec_max × d_model}`
 
-- Circuit Decoder (`CircuitDecoder`): `qcgpt/models/transformer.py:32-70`
-  - Input tokens: `circ_tokens ∈ ℤ^{B × L_circ}`; token + positional embedding.
-  - Causal mask: upper-triangular to enforce autoregressive decoding.
-  - Target padding mask: masks `PAD` in target.
-  - Memory key padding mask: set from `spec_pad_mask` to ignore padded encoder timesteps.
-  - Output projection: `ℝ^{d_model} → ℝ^{|V|}` logits per position.
+**CircuitDecoder2** (`qcgpt2/models2/transformer.py`):
+- Token embeddings + positional embeddings
+- Causal self-attention mask (autoregressive)
+- Cross-attention to encoder output with padding masks
+- Output projection: `ℝ^{d_model} → ℝ^{|V|}` logits
 
-- Circuit Policy (`CircuitPolicy`): `qcgpt/models/policy.py`
-  - Forward:
-    - Inputs: `spec_batch, spec_pad_mask, circ_tokens`.
-    - Outputs: `logits ∈ ℝ^{B × L_circ × |V|}` (`qcgpt/models/policy.py:20-23`).
-  - Sampling:
-    - Inputs: `spec_batch, spec_pad_mask, bos_id, eos_id, max_len`.
-    - Outputs: `(sampled_tokens ∈ ℤ^{B×(≤max_len+1)} padded with PAD, log_probs ∈ ℝ^{B})` (`qcgpt/models/policy.py:25-59`).
-    - Log-probabilities are accumulated per step for REINFORCE.
+**CircuitPolicy2** (`qcgpt2/models2/policy.py`):
+- Wires encoder/decoder together
+- Provides `sample_circuit_tokens()` for autoregressive generation
+- Supports differentiable embedding-based forward pass for training
 
-Training Objectives
+---
 
-- Supervised seq2seq (teacher forcing):
-  - For each batch: build `(spec_batch, spec_pad_mask)` and circuit token inputs/targets.
-  - Loss: token-level cross-entropy with `ignore_index=PAD_ID`:
-    - `L_sup = (1/N) ∑ CE(logits[b, t, :], target[b, t])` over non-PAD positions.
-  - Optimization: AdamW, gradient clipping at norm 1.0 (`qcgpt/training/supervised.py:72-75`).
+## Problem Specification
 
-- Reinforcement Learning (REINFORCE):
-  - Reward: `R = F − λ ⋅ L` where `F` is average fidelity over spec states, `L` is gate count, `λ` is length penalty (`qcgpt/training/rollouts.py:42-57`).
-  - Baseline: exponential moving average `b_t` (`RewardBaseline`, `qcgpt/training/rollouts.py:75-81`).
-  - Advantage: `A = R − b_t`.
-  - Objective: maximize `E[R] ≈ E[A ⋅ log π(a|s)]`. Minimize loss:
-    - `L_rl = − (1/B) ∑ A_i ⋅ log_probs_i` (`qcgpt/training/rl.py:72-75`).
-  - Optimization: AdamW, gradient clipping at norm 1.0.
+### Spec Tensor Format
 
-Quantum Fidelity
+Shape: `spec_tensor ∈ ℝ^{n_states × 2 × 2^{n_qubits} × 2}`
 
-- Given `spec_tensor` and a candidate `circ`:
-  - Reconstruct complex states per tuple `(ψ_in^(i), ψ_out_target^(i))` from amplitudes.
-  - Convert `circ` to Qiskit and evolve `ψ_in^(i)` to `ψ_out_pred^(i)`.
-  - Fidelity per pair: `F_i = fidelity(ψ_out_target^(i), ψ_out_pred^(i))`.
-  - Average over `i`: `F = (1/n_states) ∑ F_i` (`qcgpt/evaluation/metrics.py:10-23`).
+- `n_states`: Number of input→output state pairs
+- Dimension 2: Index 0 = input state, Index 1 = output state
+- `2^{n_qubits}`: Number of computational basis vectors
+- Last dimension: `[real, imag]` per amplitude
 
-Simulators
+**Semantics**:
+- `spec[i, 0, j, 0] = Re(ψ_in^(i)[j])`
+- `spec[i, 0, j, 1] = Im(ψ_in^(i)[j])`
+- `spec[i, 1, j, 0] = Re(ψ_out^(i)[j])`
+- `spec[i, 1, j, 1] = Im(ψ_out^(i)[j])`
 
-- Qiskit statevector-based: circuit conversion and fidelity computation (`qcgpt/simulators/qiskit_sim.py:13-47`, `qcgpt/simulators/qiskit_sim.py:78-109`).
-- Classical bit-level simulator retained for legacy and speed in `qcgpt/circuits.py:17-45`, but the main training path uses amplitude-based specs and quantum fidelity.
+**Basis ordering**: Qiskit computational basis (e.g., for 2 qubits: `|00⟩, |01⟩, |10⟩, |11⟩`)
 
-Scripts
+---
 
-- Supervised training: `scripts/train_supervised.py`
-  - Builds dataloader from Qiskit-based specs and trains `CircuitPolicy` with CE loss.
-  - Saves checkpoints to `checkpoints/supervised_epoch_XXX.pt`.
+## Tokenization (QCGPT2)
 
-- RL training: `scripts/train_rl.py`
-  - Optionally loads a supervised checkpoint.
-  - Runs REINFORCE with fidelity-based rewards.
-  - Saves final model to `checkpoints/rl_finetuned.pt`.
+### Vocabulary Structure
 
-- Evaluation: `scripts/eval_policy.py`
-  - Samples tasks, generates candidate circuits, prints reference vs candidate metrics and circuit listings.
+**Special tokens**: `<PAD>`, `<BOS_CIRC>`, `<EOS_CIRC>`
 
-End-to-End Tests (Notebook)
+**Gate tokens** (gate-with-target format):
+- One-qubit: `ID_0`, `X_0`, `Y_0`, `Z_0`, `H_0`, `S_0`, `T_0`, `RX_PI_16_0`, etc. (for each qubit 0..n-1)
+- Two-qubit: `CX_0_1`, `CZ_0_1`, `SWAP_0_1` (canonicalized: `a < b` for symmetric gates)
+- Three-qubit: `CCX_0_1_2`, `CCZ_0_1_2`, `CSWAP_0_1_2` (canonicalized ordering)
 
-- `notebooks/01_qcgpt_quantum_spec_tests.ipynb` validates the full pipeline:
-  - Qiskit states → spec tensor → inverse reconstruction (tolerance check).
-  - Batching continuous spec sequences → SpecEncoder output shape.
-  - Sampling circuit tokens and converting to `Circuit`.
-  - Fidelity comparison vs reference circuit.
-  - Single RL step runs with finite loss and gradients.
+**Key advantages over QCGPT1**:
+- No separate qubit index tokens needed
+- Automatic canonicalization (e.g., `CZ_1_0` → `CZ_0_1`)
+- Simpler decoding (one token = one complete gate application)
 
-Project Structure
+---
 
-- `qcgpt/gates.py`: vocabulary, tokens, `Gate`.
-- `qcgpt/circuits.py`: `Circuit`, bit-level simulator.
-- `qcgpt/encoding.py`: circuit tokenization and robust decoding.
-- `qcgpt/models/transformer.py`: `SpecEncoder` (continuous), `CircuitDecoder` (token-based).
-- `qcgpt/models/policy.py`: encoder–decoder wiring and sampling.
-- `qcgpt/data/qiskit_utils.py`: random circuits and amplitude spec generation.
-- `qcgpt/data/specs.py`: amplitude spec helpers and batching.
-- `qcgpt/data/dataset.py`: dataset yielding amplitude specs + reference circuits.
-- `qcgpt/training/supervised.py`: dataloader, collation, training epoch.
-- `qcgpt/training/rollouts.py`: spec batching for RL, reward, baseline.
-- `qcgpt/training/rl.py`: REINFORCE step and loop.
-- `qcgpt/simulators/qiskit_sim.py`: circuit conversion, statevector helpers, fidelities.
-- `qcgpt/evaluation/metrics.py`: fidelity and gate count.
-- `qcgpt/evaluation/visualize.py`: simple formatting utilities.
-- `scripts/`: supervised, RL, evaluation scripts.
-- `notebooks/`: sanity tests and qualitative examples.
+## Training
 
-Usage
+### Supervised Training (QCGPT2)
 
-- Install dependencies: `pip install qiskit torch numpy`.
-- Supervised: `python scripts/train_supervised.py`.
-- RL: `python scripts/train_rl.py` (ensure Qiskit installed; consider CUDA for speed).
-- Eval: `python scripts/eval_policy.py --ckpt checkpoints/rl_finetuned.pt --num_examples 10`.
+**Main script**: `qcgpt2/scripts2/train_supervised2.py`
 
-Command-Line RL Fine-Tuning
+**Key features**:
+- **Separate learning rates**: `--lr_enc` and `--lr_dec` for encoder/decoder
+- **Learning rate schedulers**: `none`, `cosine`, `step`, `exp`, `exp_warmup` (with warmup epochs)
+- **Temperature annealing**: `--temp_schedule` (cosine/linear/exp/none), `--softmax_temp`, `--temp_min`
+- **Unitary reconstruction loss**: `--use_unitary_loss` with `--lambda_U` weight
+- **Noise loss**: `--use_noise` with `--lambda_noise` weight (penalizes gate count/complexity)
+- **Curriculum learning**: Progressive depth and noise weight scheduling
+- **Supervised loss**: Cross-entropy with `--lambda_sup` weight
+- **Resume support**: Automatically loads config, optimizer, scheduler states
+- **Checkpoint management**: Saves best model, periodic epoch checkpoints, loss CSV with curriculum info
 
-- Standard RL:
-  - `python scripts/train_rl.py --num_steps 5000 --batch_size 16 --max_len 32 --lambda_len 0.1`
-- Start from supervised checkpoint:
-  - `python scripts/train_rl.py --ckpt checkpoints/supervised_final.pt --num_steps 5000`
-- Qiskit black-box with noise (requires `qiskit-aer`):
-  - `python scripts/train_rl.py --use_blackbox --method density_matrix --use_noise --p1 0.001 --p2 0.005`
-  - Parameters:
-    - `--method`: `statevector` or `density_matrix`
-    - `--use_noise`: enable NoiseModel
-    - `--p1`, `--p2`: depolarizing rates for 1q/2q gates
-  - Output: `checkpoints/rl_finetuned.pt`
+**Training modes**:
+- **Supervised only**: `lambda_sup > 0`, `lambda_U = 0`
+- **Unitary loss only**: `lambda_sup = 0`, `lambda_U > 0`
+- **Mixed**: Both losses combined (recommended for fine-tuning)
+- **With noise penalty**: `use_noise=True`, `lambda_noise > 0` adds gate count penalty to unitary loss
 
-Command-Line Training (Supervised)
+**Loss components**:
+1. **Supervised loss**: `L_sup = CrossEntropy(logits, target_tokens)` (teacher forcing)
+2. **Unitary loss**: `L_U = ||U_pred - U_target||² + λ_noise · gate_noise` where:
+   - `U_pred` = unitary from autoregressively generated circuit (via Gumbel-Softmax)
+   - `U_target` = unitary from reference circuit
+   - `gate_noise` = weighted sum of gate costs (penalizes complex gates)
+   - Uses parallel tree reduction for efficient matrix multiplication
 
-- Train from scratch and save checkpoints:
-  - `python scripts/train_supervised.py --num_epochs 20 --num_samples 10000 --batch_size 64 --raw_max_depth 16`
-- Resume training from a checkpoint:
-  - `python scripts/train_supervised.py --ckpt checkpoints/supervised_current.pt --num_epochs 10 --num_samples 5000 --batch_size 64`
-- Basis-only spec (computational basis only):
-  - `python scripts/train_supervised.py --basis_only`
-- Add random states to the spec (in addition to basis):
-  - `python scripts/train_supervised.py --n_random_states 4`
-- Checkpoints written:
-  - `checkpoints/supervised_current.pt` after each epoch from epoch 10 onward
-  - `checkpoints/supervised_best.pt` whenever training loss improves
-  - `checkpoints/supervised_final.pt` at the end of training
-- GPU usage:
-  - Script auto-selects CUDA if available; ensure the environment has GPU drivers and PyTorch with CUDA support installed.
+**Temperature annealing**:
+- Global schedule across total planned epochs (not restarted on resume)
+- Cosine: `T(ep) = T_max - (T_max - T_min) * 0.5 * (1 - cos(π * (ep-1)/(total-1)))`
+- Linear: `T(ep) = T_max + (ep-1)/(total-1) * (T_min - T_max)`
+- Exponential: `T(ep) = T_max * (T_min/T_max)^((ep-1)/(total-1))`
+- None: Fixed temperature (no annealing)
 
-Batch Job Example (GPU)
+**Curriculum Learning**:
+- Progressive difficulty scheduling for depth and noise weight
+- **Depth schedule**: Step-wise increase from `start_depth` to `end_depth`
+  - Increases by `depth_step` every `increase_every` epochs
+  - Dataset is automatically rebuilt when depth changes
+- **Noise schedule**: Linear warmup from 0 to `max_noise_weight` over `noise_warmup_epochs`
+- Automatically adjusts on resume to match the correct epoch
 
-- Example job command:
-  - `python scripts/train_supervised.py --num_epochs 50 --num_samples 50000 --batch_size 128 --raw_max_depth 16`
-- Resume job if preempted:
-  - `python scripts/train_supervised.py --ckpt checkpoints/supervised_current.pt --num_epochs 20 --num_samples 50000 --batch_size 128`
-- Tips:
-  - Use larger `--batch_size` on GPU and scale `--num_samples` for better coverage.
-  - Monitor logs for loss; best checkpoint is updated automatically.
+### Command-Line Usage
 
-Design Notes and Extensions
+**Basic training**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --num_epochs 200 \
+  --num_samples 200000 \
+  --batch_size 512 \
+  --lr_enc 5e-6 \
+  --lr_dec 2e-5 \
+  --weight_decay 0.01 \
+  --scheduler exp \
+  --gamma 0.985 \
+  --use_unitary_loss \
+  --lambda_sup 0.1 \
+  --lambda_U 1.0 \
+  --softmax_temp 1.0 \
+  --temp_min 0.1 \
+  --temp_schedule cosine \
+  --raw_max_depth 8 \
+  --basis_only
+```
 
-- Continuous spec input avoids lossy tokenization of amplitudes; circuit side remains token-based for discrete gate synthesis.
-- Constrained decoding (future): enforce valid token grammars (gate → required qubit tokens) via masks.
-- More qubits: parameterize qubit tokens (`q0..q{n-1}`), increase `n_basis = 2^n`, and adapt batching/masks; note exponential growth in sequence length.
+**Resume training**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --resume_dir /path/to/checkpoint/folder
+```
 
-Evaluation Grid
+**Training with curriculum learning**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --num_epochs 200 \
+  --num_samples 200000 \
+  --batch_size 512 \
+  --lr_enc 5e-6 \
+  --lr_dec 2e-5 \
+  --use_unitary_loss \
+  --lambda_sup 0.1 \
+  --lambda_U 1.0 \
+  --use_noise \
+  --use_curriculum \
+  --curriculum_start_depth 8 \
+  --curriculum_end_depth 32 \
+  --curriculum_max_noise 0.1 \
+  --curriculum_noise_warmup 30 \
+  --curriculum_depth_step 4 \
+  --curriculum_increase_every 10 \
+  --softmax_temp 1.0 \
+  --temp_min 0.1 \
+  --temp_schedule cosine
+```
 
-- Grid and fidelity reporting:
-  - `scripts/eval_grid.py` renders a grid of reference vs reconstructed circuits and writes per-cell fidelities to `fidelities.csv`.
-  - Also writes `avg_fidelity.csv` with `mean_fid_ref` and `mean_fid_cand` over the grid (`scripts/eval_grid.py:137-149`).
-- Local runner (Windows-friendly):
-  - `python scripts/run_eval_grid.py` without CLI flags; customize via environment variables (`CKPT, NUM_ROWS, NUM_COLS, MAX_LEN, MAX_GATES, OUT_DIR, RUN_NAME`).
-  - Ensures `PYTHONPATH` includes repo root and normalizes Windows paths.
-- Advanced RL: actor-critic/PPO to reduce variance; learned value head; curriculum over gate count.
-- Noise models: integrate Qiskit noise for robust circuit generation; adjust rewards accordingly.
-- Beam search/top-k decoding: improve circuit quality and reduce degenerate tokens.
+**Training with warmup scheduler**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --num_epochs 200 \
+  --scheduler exp_warmup \
+  --warmup_epochs 15 \
+  --gamma 0.98 \
+  --lr_enc 1e-7 \
+  --lr_dec 4e-6
+```
 
-Mathematical Summary
+The resume script automatically:
+- Loads config from `{prefix}_config.txt`
+- Finds latest epoch checkpoint
+- Restores optimizer and scheduler states
+- Continues temperature annealing from correct epoch
+- Truncates loss CSV to avoid duplicates
 
-- Spec sequence construction:
-  - For each pair `i ∈ {1..n_states}` and basis index `j ∈ {0..2^n−1}`, construct features `v_{i,j} = (Re ψ_in^(i)[j], Im ψ_in^(i)[j], Re ψ_out^(i)[j], Im ψ_out^(i)[j]) ∈ ℝ^4`.
-  - Flatten `(i,j)` to timestep `t = i⋅2^n + j`. Sequence length `L_spec = n_states ⋅ 2^n`.
+**Key arguments**:
+- `--num_epochs`: Total epochs for new runs, remaining epochs for resume
+- `--num_samples`: Dataset size
+- `--batch_size`: Batch size
+- `--lr_enc`, `--lr_dec`: Separate learning rates (or use `--lr` for single rate)
+- `--scheduler`: `none`, `cosine`, `step`, `exp`, `exp_warmup` (exponential with warmup)
+- `--warmup_epochs`: Epochs for LR warmup (used with `exp_warmup` scheduler)
+- `--use_unitary_loss`: Enable unitary reconstruction loss
+- `--lambda_sup`, `--lambda_U`: Loss weights
+- `--use_noise`: Enable noise/gate complexity penalty
+- `--lambda_noise`: Weight for noise penalty (only used if `--use_noise`)
+- `--use_curriculum`: Enable curriculum learning
+- `--curriculum_start_depth`, `--curriculum_end_depth`: Depth range for curriculum
+- `--curriculum_max_noise`: Maximum noise weight in curriculum
+- `--curriculum_noise_warmup`: Epochs to warmup noise weight
+- `--curriculum_depth_step`: Depth increment per step
+- `--curriculum_increase_every`: Epochs between depth increases
+- `--softmax_temp`, `--temp_min`, `--temp_schedule`: Temperature annealing
+- `--raw_max_depth`: Maximum circuit depth in dataset (ignored if curriculum enabled)
+- `--basis_only`: Use only computational basis states
+- `--n_random_states`: Additional random states beyond basis
+- `--ckpt`: Initial checkpoint to load (for transfer learning)
+- `--resume_dir`: Directory containing previous training run
 
-- Encoder:
-  - `h_t^0 = W_in v_t + p_t`, `W_in ∈ ℝ^{d_model×4}`, `p_t ∈ ℝ^{d_model}`.
-  - Transformer layers: `h^ℓ = TFEnc(h^{ℓ−1})`, output `H ∈ ℝ^{L_spec×d_model}`.
+### Batch Jobs (SLURM)
 
-- Decoder:
-  - Token embeddings `e_u ∈ ℝ^{d_model}`, positions `q_t ∈ ℝ^{d_model}`, input `z_t = e_{u_t} + q_t`.
-  - Causal self-attention on `z`, cross-attention to encoder `H` with memory masks.
-  - Output logits: `o_t = W_out y_t`, `W_out ∈ ℝ^{|V|×d_model}`.
+**Training scripts**:
+- `batch_1pretrain2.slurm`: Initial pretraining
+- `batch_2midtrain2.slurm`: Mid-training with curriculum
+- `batch_3teach_noise2.slurm`: Fine-tuning with noise penalty (fixed temperature)
+- `batch_curriculum_learning2.slurm`: Full curriculum learning setup
 
-- Supervised loss:
-  - `L_sup = − ∑_{t∈valid} log softmax(o_t)[y_t]`.
+**Resume** (`batch_jobs/gpt2_jobs/resume_batch_train2.slurm`):
+```bash
+sbatch batch_jobs/gpt2_jobs/resume_batch_train2.slurm /path/to/checkpoint/folder
+```
 
-- REINFORCE loss:
-  - Sample tokens `u_{1:T} ~ π(u_t | u_{<t}, H)` with BOS/EOS.
-  - Compute `R = (1/n_states) ∑ fidelity(ψ_out_target^(i), evolve(circ, ψ_in^(i))) − λ ⋅ |circ|`.
-  - Loss: `L_rl = − (R − b) ⋅ ∑_{t=1}^T log π(u_t | u_{<t}, H)`.
+**Configuration**: Edit SLURM scripts or set environment variables:
+- `LR_ENC`, `LR_DEC`: Learning rates
+- `SCHEDULER`: `none`, `cosine`, `step`, `exp`, `exp_warmup`
+- `WARMUP_EPOCHS`: Epochs for LR warmup (with `exp_warmup` scheduler)
+- `SOFTMAX_TEMP`, `TEMP_MIN`, `TEMP_SCHEDULE`: Temperature annealing
+- `LAMBDA_SUP`, `LAMBDA_U`: Loss weights
+- `USE_NOISE`, `LAMBDA_NOISE`: Noise penalty configuration
+- `USE_CURRICULUM`: Enable curriculum learning
+- `CURRICULUM_START_DEPTH`, `CURRICULUM_END_DEPTH`: Depth range
+- `CURRICULUM_MAX_NOISE`, `CURRICULUM_NOISE_WARMUP`: Noise curriculum
+- `CURRICULUM_DEPTH_STEP`, `CURRICULUM_INCREASE_EVERY`: Depth schedule
+- `EPOCHS`, `SAMPLES`, `BATCH`: Training parameters
 
-License and Contributions
+### Checkpoint Structure
 
-- Contributions welcome: open PRs with tests/notebooks demonstrating improvements.
+Each training run creates a directory (e.g., `model_checkpoints/qcgpt2_mid_20251202_211824/`):
+
+- `{prefix}_config.txt`: All training hyperparameters (saved automatically)
+- `{prefix}_loss.csv`: Training/validation loss per epoch
+  - Without curriculum: `epoch,train_loss,val_loss`
+  - With curriculum: `epoch,train_loss,val_loss,depth,lambda_noise`
+- `{prefix}_best.pt`: Best model (lowest validation loss)
+- `{prefix}_e{N}.pt`: Epoch checkpoints (every 10 epochs)
+  - Contains: `model_state_dict`, `optimizer_state_dict`, `scheduler_state_dict`, `epoch`
+
+**Config file format** (automatically saved/loaded):
+```
+prefix=transformer_v2
+num_epochs_total=200
+batch_size=512
+lr_enc=5e-06
+lr_dec=2e-05
+scheduler=exp_warmup
+warmup_epochs=15
+gamma=0.98
+softmax_temp=1.0
+temp_min=0.1
+temp_schedule=cosine
+lambda_sup=0.1
+lambda_U=1.0
+use_noise=True
+lambda_noise=1.0
+use_curriculum=True
+curriculum_start_depth=8
+curriculum_end_depth=32
+curriculum_max_noise=1.0
+curriculum_noise_warmup=20
+curriculum_depth_step=4
+curriculum_increase_every=5
+...
+```
+
+---
+
+## Evaluation
+
+**Key QCGPT2 Scripts**
+
+- `qcgpt2/scripts2/train_supervised2.py`
+  - Supervised training of `CircuitPolicy2` from synthetic spec–circuit pairs
+  - Options: curriculum (depth/noise), unitary loss, schedulers, separate LR for encoder/decoder
+  - Outputs: `model_checkpoints/<RUN_NAME>/<PREFIX>_best.pt` and `<PREFIX>_final.pt`; loss CSV logs (with curriculum info when enabled)
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/train_supervised2.py \
+      --num_epochs 200 --num_samples 200000 --batch_size 512 \
+      --use_unitary_loss --lambda_sup 0.1 --lambda_U 1.0 \
+      --use_curriculum --curriculum_start_depth 8 --curriculum_end_depth 32
+    ```
+
+- `qcgpt2/scripts2/eval_policy2.py`
+  - Evaluates a trained policy by sampling candidate circuits for random tasks
+  - Reports unitary-based fidelity and gate counts; supports decode strategies `greedy`, `beam`, `topk`, `topp`
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/eval_policy2.py --ckpt /path/to/model.pt --num_examples 100 --max_len 64
+    ```
+
+- `qcgpt2/scripts2/eval_grid2.py`
+  - Generates a grid figure of Qiskit-drawn circuits comparing reference vs reconstructed candidates
+  - Saves `model_evaluations/<RUN_NAME>/circuits_grid.png` and `fidelities.csv` with per-cell fidelities
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/eval_grid2.py \
+      --ckpt /path/to/model.pt --num_rows 16 --num_cols 16 --max_len 32 --max_gates_ref 6 \
+      --out_dir model_evaluations --run_name eval_$(date +%Y%m%d_%H%M%S)
+    ```
+
+- `qcgpt2/scripts2/compare_models.py`
+  - Compares two checkpoints across a sampled dataset; produces CSV and plots in `comparison_results/`
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/compare_models.py \
+      --ckpt_pre /path/to/pre.pt --ckpt_mid /path/to/mid.pt \
+      --num_samples 1000 --batch_size 100 --out_dir comparison_results
+    ```
+
+- `qcgpt2/scripts2/analyse_current_training.py`
+  - Loads pre/mid/fine checkpoints and evaluates them under consistent generation; writes histograms and summaries
+
+- `qcgpt2/scripts2/eval_unitary_debug.py`
+  - Diagnostic script for Gumbel-Softmax-based differentiable generation and soft unitary computation; contrasts training vs real-world fidelities
+
+- `qcgpt2/scripts2/eval_gumbel_reconstruct.py`
+  - Minimal example of constructing token sequences via Gumbel-Softmax from decoder logits
+
+- `qcgpt2/scripts2/vocab_map2.py`
+  - Prints a JSON mapping of tokens to gate types and targets (vocabulary introspection)
+
+---
+
+## Quantum Fidelity
+
+Given `spec_tensor` and a candidate circuit:
+
+1. Reconstruct complex states: `ψ_in^(i)`, `ψ_out_target^(i)` from amplitudes
+2. Convert circuit to Qiskit and evolve: `ψ_out_pred^(i) = U_circ · ψ_in^(i)`
+3. Compute fidelity: `F_i = |⟨ψ_out_target^(i) | ψ_out_pred^(i)⟩|²`
+4. Average: `F = (1/n_states) ∑ F_i`
+
+**Unitary-based loss** (QCGPT2):
+- Directly compares `U_pred` (from generated circuit) vs `U_target` (from reference)
+- Uses Frobenius norm: `||U_pred - U_target||²_F`
+- More efficient than state-by-state fidelity for training
+
+---
+
+## Installation
+
+**Dependencies**:
+```bash
+pip install torch numpy qiskit matplotlib pandas
+```
+
+**Environment setup**:
+- Python 3.8+
+- PyTorch with CUDA support (recommended)
+- Qiskit for quantum simulation
+
+**Path setup**:
+```bash
+export PYTHONPATH=/path/to/qcgpt:$PYTHONPATH
+```
+
+---
+
+## Project Structure (Detailed)
+
+### QCGPT2 Core (`qcgpt2/`)
+
+**Models**:
+- `models2/transformer.py`: `SpecEncoder`, `CircuitDecoder2`
+- `models2/policy.py`: `CircuitPolicy2`
+
+**Data**:
+- `data/dataset2.py`: `SimplifiedCircuitDataset2` (generates random circuits)
+- `data/specs2.py`: Spec tensor construction and batching
+
+**Gates & Circuits**:
+- `gates2.py`: Vocabulary and token mappings
+- `gate_registry2.py`: Gate canonicalization, vocabulary building
+- `circuits2.py`: `Circuit2`, `Gate2` classes
+- `encoding2.py`: Token ↔ circuit conversions
+- `unitaries2.py`: Exact unitary matrices for all gates
+
+**Training**:
+- `training2/supervised.py`: Training loop, unitary loss, Gumbel-Softmax generation
+- `scripts2/train_supervised2.py`: Main training script with resume support
+
+**Evaluation**:
+- `scripts2/eval_policy2.py`: Single model evaluation
+- `scripts2/eval_grid2.py`: Grid-based evaluation
+- `scripts2/compare_models.py`: Multi-model comparison
+
+**Simulators**:
+- `simulators2/`: Qiskit-based quantum simulation
+
+**Tests**:
+- `tests2/`: Unit tests for components
+
+### QCGPT1 (Legacy) (`qcgpt1/`)
+
+Similar structure but with separate gate/qubit tokenization. See original README sections for details.
+
+### Batch Jobs (`batch_jobs/`)
+
+- `gpt2_jobs/`: SLURM scripts for QCGPT2 training/evaluation
+  - `batch_1pretrain2.slurm`: Initial pretraining
+  - `batch_2midtrain2.slurm`: Mid-training with curriculum
+  - `batch_3teach_noise2.slurm`: Fine-tuning with noise penalty
+  - `batch_curriculum_learning2.slurm`: Curriculum learning configuration
+  - `batch_eval2.slurm`: Model evaluation
+  - `batch_analyse_training.slurm`: Training analysis
+  - `resume_batch_train2.slurm`: Resume training from checkpoint
+- `gpt1_jobs/`: SLURM scripts for QCGPT1 (legacy)
+- `logs/`: Job output logs
+
+### Output Directories
+
+- `model_checkpoints/`: Training runs (one directory per run)
+- `model_evaluations/`: Evaluation results
+- `comparison_results/`: Model comparison outputs
+- `saved_models/`: Final exported models
+
+---
+
+## Mathematical Summary
+
+### Spec Sequence Construction
+
+For each pair `i ∈ {1..n_states}` and basis index `j ∈ {0..2^n−1}`:
+- Features: `v_{i,j} = (Re ψ_in^(i)[j], Im ψ_in^(i)[j], Re ψ_out^(i)[j], Im ψ_out^(i)[j]) ∈ ℝ^4`
+- Flatten to timestep: `t = i·2^n + j`
+- Sequence length: `L_spec = n_states · 2^n`
+
+### Encoder
+
+- Input projection: `h_t^0 = W_in v_t + p_t` where `W_in ∈ ℝ^{d_model×4}`, `p_t ∈ ℝ^{d_model}`
+- Transformer layers: `h^ℓ = TFEnc(h^{ℓ−1})`
+- Output: `H ∈ ℝ^{L_spec×d_model}`
+
+### Decoder
+
+- Token embeddings: `e_u ∈ ℝ^{d_model}`, positions: `q_t ∈ ℝ^{d_model}`
+- Input: `z_t = e_{u_t} + q_t`
+- Causal self-attention on `z`, cross-attention to encoder `H`
+- Output logits: `o_t = W_out y_t` where `W_out ∈ ℝ^{|V|×d_model}`
+
+### Loss Functions
+
+**Supervised loss**:
+- `L_sup = − ∑_{t∈valid} log softmax(o_t)[y_t]`
+
+**Unitary loss** (QCGPT2):
+- Generate circuit via Gumbel-Softmax: `probs = GumbelSoftmax(logits, temp)`
+- Compute unitary: `U_pred = ∏_t U_gate(probs[t])` (parallel tree reduction)
+- Loss: `L_U = ||U_pred - U_target||²_F + λ_noise · gate_noise`
+
+**Total loss**:
+- `L = λ_sup · L_sup + λ_U · L_U`
+- If `use_noise=True`: `L_U` includes gate complexity penalty
+
+---
+
+## Design Notes
+
+### QCGPT2 Improvements
+
+1. **Gate-with-target tokens**: Simpler vocabulary, no grammar constraints needed
+2. **Unitary loss**: Direct physics-based training signal
+3. **Noise penalty**: Gate complexity regularization via `lambda_noise`
+4. **Curriculum learning**: Progressive difficulty scheduling for depth and noise
+5. **Temperature annealing**: Smooth exploration → exploitation transition
+6. **Learning rate warmup**: `exp_warmup` scheduler with configurable warmup epochs
+7. **Separate learning rates**: Fine-grained control over encoder/decoder training
+8. **Resume support**: Seamless continuation with state preservation and curriculum adjustment
+9. **Enhanced logging**: CSV includes curriculum depth and noise weight when enabled
+
+### Future Extensions
+
+- **Constrained decoding**: Enforce valid gate sequences via masks
+- **More qubits**: Scale to 4+ qubits (note exponential growth in spec length)
+- **Beam search**: Improve generation quality
+- **RL fine-tuning**: REINFORCE with fidelity rewards
+- **Noise models**: Train on noisy quantum hardware
+
+---
+
+## License and Contributions
+
+Contributions welcome! Please open PRs with tests demonstrating improvements.

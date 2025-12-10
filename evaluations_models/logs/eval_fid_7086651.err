@@ -1,0 +1,2 @@
+usage: evaluate_model_fidelities.py [-h] --p1 P1 --p2 P2 [--out OUT]
+evaluate_model_fidelities.py: error: unrecognized arguments: --samples 500

@@ -1,0 +1,19 @@
+/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py:26: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+  checkpoint = torch.load(ckpt_path, map_location=device)
+  0%|          | 0/500 [00:00<?, ?it/s]  0%|          | 0/500 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 213, in <module>
+    run_evaluation(args.p1, args.p2, args.out, args.samples)
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 129, in run_evaluation
+    fid_p1, tokens_p1 = predict_and_eval(model_p1, "Phase I")
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 104, in predict_and_eval
+    probs = generate_differentiable_logits(
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/training2/supervised.py", line 76, in generate_differentiable_logits
+    memory = model.encoder(spec_batch, spec_pad_mask)
+  File "/home/caiosiq/.conda/envs/qcgpt/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/caiosiq/.conda/envs/qcgpt/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/models2/transformer.py", line 17, in forward
+    B, n_pairs, F = spec_batch.shape
+ValueError: too many values to unpack (expected 3)
