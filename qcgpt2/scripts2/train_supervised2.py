@@ -1,3 +1,16 @@
+"""QCGPT2 Supervised Training Script
+
+Trains the QCGPT2 `CircuitPolicy2` in a supervised manner from synthetic
+specification–circuit pairs.
+
+- Builds datasets using Qiskit-based amplitude specs
+- Supports curriculum (depth/noise), unitary loss, and scheduler options
+- Writes only `*_best.pt` and `*_final.pt` checkpoints inside `model_checkpoints/<RUN_NAME>`
+
+Run:
+    python qcgpt2/scripts2/train_supervised2.py --num_epochs 50 --batch_size 512 \
+        --out_dir model_checkpoints --run_name <stamp> --prefix transformer_v2
+"""
 import torch
 import torch.optim as optim
 from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR, ExponentialLR, LinearLR, SequentialLR
@@ -66,6 +79,8 @@ def main():
     parser.add_argument("--lr_dec", type=float, default=None)
     parser.add_argument("--weight_decay", type=float, default=0.01)
     parser.add_argument("--scheduler", type=str, default="none", choices=["none","cosine","step","exp","exp_warmup"])
+    parser.add_argument("--optimizer", type=str, default="adam", choices=["adam","sgd"])
+    parser.add_argument("--momentum", type=float, default=0.9)
     parser.add_argument("--t_max", type=int, default=50)
     parser.add_argument("--step_size", type=int, default=50)
     parser.add_argument("--gamma", type=float, default=0.5)
@@ -74,6 +89,7 @@ def main():
     parser.add_argument("--lambda_U", type=float, default=0.0)
     parser.add_argument("--use_noise", action="store_true")
     parser.add_argument("--lambda_noise", type=float, default=0.0)
+    parser.add_argument("--noise_scale", type=float, default=1.0)
     parser.add_argument("--use_curriculum", action="store_true")
     parser.add_argument("--curriculum_start_depth", type=int, default=8)
     parser.add_argument("--curriculum_end_depth", type=int, default=32)
@@ -116,6 +132,12 @@ def main():
             args.lr_enc = float(cfg.get("lr_enc", args.lr_enc)) if cfg.get("lr_enc") else args.lr_enc
             args.lr_dec = float(cfg.get("lr_dec", args.lr_dec)) if cfg.get("lr_dec") else args.lr_dec
             args.scheduler = cfg.get("scheduler", args.scheduler)
+            args.optimizer = cfg.get("optimizer", args.optimizer)
+            if "momentum" in cfg:
+                try:
+                    args.momentum = float(cfg["momentum"])
+                except Exception:
+                    pass
             args.t_max = int(cfg.get("t_max", args.t_max))
             args.step_size = int(cfg.get("step_size", args.step_size))
             args.gamma = float(cfg.get("gamma", args.gamma))
@@ -162,12 +184,21 @@ def main():
     if args.lr_enc is not None and args.lr_dec is not None:
         enc_ids = set(map(id, model.encoder.parameters()))
         decoder_params = [p for p in model.parameters() if id(p) not in enc_ids]
-        optimizer = optim.AdamW([
-            {"params": list(model.encoder.parameters()), "lr": args.lr_enc},
-            {"params": decoder_params, "lr": args.lr_dec},
-        ], weight_decay=args.weight_decay)
+        if args.optimizer == "sgd":
+            optimizer = optim.SGD([
+                {"params": list(model.encoder.parameters()), "lr": args.lr_enc},
+                {"params": decoder_params, "lr": args.lr_dec},
+            ], weight_decay=args.weight_decay, momentum=args.momentum)
+        else:
+            optimizer = optim.Adam([
+                {"params": list(model.encoder.parameters()), "lr": args.lr_enc},
+                {"params": decoder_params, "lr": args.lr_dec},
+            ], weight_decay=args.weight_decay)
     else:
-        optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        if args.optimizer == "sgd":
+            optimizer = optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay, momentum=args.momentum)
+        else:
+            optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = None
     if args.scheduler == "cosine":
         scheduler = CosineAnnealingLR(optimizer, T_max=args.t_max)
@@ -244,6 +275,8 @@ def main():
         csv_header = ["epoch", "train_loss", "val_loss"]
         if args.use_curriculum:
             csv_header.extend(["depth", "lambda_noise"])
+        # Always include noise_scale in header
+        csv_header.append("noise_scale")
         with open(loss_csv, "w", newline="") as f:
             csv.writer(f).writerow(csv_header) 
     if not os.path.exists(config_txt):
@@ -258,6 +291,8 @@ def main():
             if args.lr_dec is not None: f.write(f"lr_dec={args.lr_dec}\n")
             f.write(f"weight_decay={args.weight_decay}\n")
             f.write(f"scheduler={args.scheduler}\n")
+            f.write(f"optimizer={args.optimizer}\n")
+            f.write(f"momentum={args.momentum:.6f}\n")
             f.write(f"t_max={args.t_max}\n")
             f.write(f"step_size={args.step_size}\n")
             f.write(f"gamma={args.gamma}\n")
@@ -282,6 +317,7 @@ def main():
             f.write(f"softmax_temp={args.softmax_temp}\n")
             f.write(f"temp_min={args.temp_min}\n")
             f.write(f"temp_schedule={args.temp_schedule}\n")
+            f.write(f"noise_scale={args.noise_scale}\n")
 
     start_epoch = 1
     # Resolve initial checkpoint: allow directory or file
@@ -360,7 +396,7 @@ def main():
                         print(f"[Train2] Scheduler fast-forward failed: {e}")
                 # Truncate CSV rows beyond last_e
                 # Also ensure header matches current curriculum settings
-                if os.path.exists(loss_csv):
+        if os.path.exists(loss_csv):
                     try:
                         with open(loss_csv, "r") as f:
                             rows = list(csv.reader(f))
@@ -368,6 +404,9 @@ def main():
                         expected_header = ["epoch", "train_loss", "val_loss"]
                         if args.use_curriculum:
                             expected_header.extend(["depth", "lambda_noise"])
+                        # Always include noise_scale column if not present
+                        if "noise_scale" not in expected_header:
+                            expected_header.append("noise_scale")
                         header = rows[0] if rows else expected_header
                         # Update header if it doesn't match (e.g., curriculum was enabled/disabled)
                         if header != expected_header:
@@ -396,6 +435,21 @@ def main():
             return
         args.num_epochs = total_planned - (start_epoch - 1)
         print(f"[Train2] Planned remaining epochs: {args.num_epochs}")
+
+        # Load noise_scale from config if present to ensure consistency on resume
+        try:
+            import sys as _sys
+            cli_has_noise_scale = any(arg.startswith("--noise_scale") for arg in _sys.argv)
+            if not cli_has_noise_scale:
+                with open(config_txt, "r") as f:
+                    for line in f:
+                        if line.startswith("noise_scale="):
+                            val = float(line.strip().split("=", 1)[1])
+                            args.noise_scale = val
+                            print(f"[Train2] Loaded noise_scale={args.noise_scale} from config")
+                            break
+        except Exception:
+            pass
         
         # If curriculum is enabled, recompute the correct depth for the resume epoch
         if args.use_curriculum:
@@ -486,6 +540,7 @@ def main():
             softmax_temp=temp,
             use_noise=args.use_noise,
             lambda_noise=effective_lambda_noise,
+            noise_scale=args.noise_scale,
         )
         val_loss = evaluate_supervised_epoch2(
             model, val_loader, device,
@@ -495,10 +550,11 @@ def main():
             softmax_temp=temp,
             use_noise=args.use_noise,
             lambda_noise=effective_lambda_noise,
+            noise_scale=args.noise_scale,
         )
         if scheduler is not None:
             scheduler.step()
-        group_lrs = ",".join(f"{pg['lr']:.6f}" for pg in optimizer.param_groups)
+        group_lrs = ",".join(f"{pg['lr']:.3g}" for pg in optimizer.param_groups)
         curriculum_info = ""
         if args.use_curriculum:
             curriculum_info = f"  Depth={current_depth}  NoiseW={effective_lambda_noise:.4f}"
@@ -507,6 +563,7 @@ def main():
             row = [ep, f"{train_loss:.8f}", f"{val_loss:.8f}"]
             if args.use_curriculum:
                 row.extend([current_depth, f"{effective_lambda_noise:.8f}"])
+            row.append(f"{args.noise_scale:.6f}")
             csv.writer(f).writerow(row)
         if (val_loss if args.use_unitary_loss else train_loss) < best_loss:
             best_loss = val_loss if args.use_unitary_loss else train_loss

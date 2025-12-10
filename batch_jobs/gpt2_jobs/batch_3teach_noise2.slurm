@@ -18,7 +18,7 @@ export PYTHONPATH=$PYTHONPATH:.
 # Start from the high-fidelity Depth 8 expert
 CKPT_INIT="/home/caiosiq/qcgpt/model_checkpoints/qcgpt2_mid_20251204_095733/transformer_v2_best.pt"
 
-RUN_NAME="finetuned_noised_$(date +%Y%m%d_%H%M)"
+RUN_NAME="qcgpt2_finetuned_noised_$(date +%Y%m%d_%H%M)"
 
 # --- DATA ---
 RAWDEPTH=8
@@ -30,22 +30,26 @@ EPOCHS=200
 
 # High Learning Rate for Optimization (3e-5)
 # Protected by Warmup
-LR_ENC=1e-7
-LR_DEC=4e-6
-SCHEDULER="exp_warmup"
-WARMUP_EPOCHS=15
-GAMMA=0.98
+LR_ENC=1e-5
+LR_DEC=1e-4
+SCHEDULER="exp"
+GAMMA=0.985
+
+
 
 # --- LOSS CONFIG (The "Freedom" Config) ---
-LAMBDA_SUP=0.01   # Minimal tether. Model is free to rewrite circuits.
+# Cut the tether. Pure RL.
+LAMBDA_SUP=0.0
 LAMBDA_U=1.0      # Physics is the primary constraint.
 LAMBDA_NOISE=1.0
+# Scale mapping from raw error rates to fidelity loss
+NOISE_SCALE=5
 # --- NOISE CONFIG (The "Shock") ---
 USE_NOISE=1
-SOFTMAX_TEMP=0.1
+SOFTMAX_TEMP=2.0
 TEMP_MIN=0.1      # Same as SOFTMAX_TEMP for fixed temperature
-TEMP_SCHEDULE=none  # Fixed temperature, no annealing
-
+TEMP_SCHEDULE="cosine"  # Fixed temperature, no annealing
+T_MAX=${T_MAX:-200}
 python3 -u qcgpt2/scripts2/train_supervised2.py \
   --ckpt ${CKPT_INIT} \
   --run_name ${RUN_NAME} \
@@ -56,7 +60,6 @@ python3 -u qcgpt2/scripts2/train_supervised2.py \
   --lr_dec ${LR_DEC} \
   --weight_decay 0.01 \
   --scheduler ${SCHEDULER} \
-  --warmup_epochs ${WARMUP_EPOCHS} \
   --gamma ${GAMMA} \
   --num_workers 16 \
   --pin_memory \
@@ -67,7 +70,9 @@ python3 -u qcgpt2/scripts2/train_supervised2.py \
   --lambda_U ${LAMBDA_U} \
   --use_noise \
   --lambda_noise ${LAMBDA_NOISE} \
+  --noise_scale ${NOISE_SCALE} \
   --softmax_temp ${SOFTMAX_TEMP} \
   --temp_min ${TEMP_MIN} \
   --temp_schedule ${TEMP_SCHEDULE} \
+  --t_max ${T_MAX} \
   --out_dir model_checkpoints

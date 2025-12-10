@@ -1,3 +1,8 @@
+"""QCGPT2 Gumbel Reconstruct Script
+
+Demonstrates differentiable generation via Gumbel-Softmax from logits,
+building a circuit token sequence and inspecting selected IDs.
+"""
 import torch
 import torch.nn.functional as F
 import numpy as np

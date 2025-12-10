@@ -238,4 +238,4 @@ COST_2Q_NATIVE = 0.01     # 1.0% error (Standard "Unit of Pain")
 COST_SWAP = 0.03          # SWAP ~= 3 CNOTs
 COST_CCX = 0.06           # Toffoli ~= 6 CNOTs
 COST_CCZ = 0.06
-COST_CSWAP = 0.09
+COST_CSWAP = 0.06

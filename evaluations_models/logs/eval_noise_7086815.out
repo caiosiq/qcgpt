@@ -1,0 +1,14 @@
+------------------------------------------------
+Running Section 5.2 Evaluation: NISQ Robustness
+Model: transformer_v2_best.pt
+Noise Scale: 5.0x
+------------------------------------------------
+Using device: cuda
+Loading model from model_checkpoints/qcgpt2_finetuned_noised_from_pre_trained_cold_20251209_1411/transformer_v2_best.pt...
+Noise Model Configured (Scale=5.0x)
+Benchmarking 300 circuits against Qiskit O3...
+
+Results: Model Wins: 74, Ties: 120, Qiskit Wins: 106
+Average Fidelity Gain: 0.0048
+Saved plot to evaluations_models/results_section_5_2/fidelity_gain_histogram.png
+Done. Check evaluations_models/results_section_5_2

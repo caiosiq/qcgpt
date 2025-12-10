@@ -1,4 +1,14 @@
 import os
+"""QCGPT2 Model Comparison Script
+
+Compares two checkpoints (pre and mid) across a sampled dataset, producing
+summary statistics and saving plots in `comparison_results/`.
+
+Run:
+    python qcgpt2/scripts2/compare_models.py \
+      --ckpt_pre /path/to/pre.pt --ckpt_mid /path/to/mid.pt \
+      --num_samples 1000 --batch_size 100 --out_dir comparison_results
+"""
 import argparse
 import torch
 import numpy as np

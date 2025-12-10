@@ -49,6 +49,7 @@ USE_UNITARY_LOSS=${USE_UNITARY_LOSS:-0}
 LAMBDA_SUP=${LAMBDA_SUP:-1.0}
 LAMBDA_U=${LAMBDA_U:-0.0}
 SOFTMAX_TEMP=${SOFTMAX_TEMP:-1.0}
+NOISE_SCALE=${NOISE_SCALE:-1.0}
 
 python3 -u qcgpt2/scripts2/train_supervised2.py \
   --num_epochs ${EPOCHS} \
@@ -70,6 +71,7 @@ python3 -u qcgpt2/scripts2/train_supervised2.py \
   --lambda_sup ${LAMBDA_SUP} \
   --lambda_U ${LAMBDA_U} \
   --softmax_temp ${SOFTMAX_TEMP} \
+  --noise_scale ${NOISE_SCALE} \
   --out_dir ${OUT_DIR} \
   --run_name ${RUN_NAME} \
   --prefix ${PREFIX}

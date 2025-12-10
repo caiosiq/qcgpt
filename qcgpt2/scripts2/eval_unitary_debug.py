@@ -1,4 +1,10 @@
 import os
+"""QCGPT2 Unitary Debug Script
+
+Provides debugging utilities for differentiable (Gumbel-Softmax) circuit
+generation and soft/teacher-forcing unitary reconstruction to analyze
+training-time vs real-world fidelities.
+"""
 import argparse
 import numpy as np
 import torch

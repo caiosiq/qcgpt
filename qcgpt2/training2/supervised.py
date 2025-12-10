@@ -131,31 +131,35 @@ def generate_differentiable_logits(model, spec_batch, spec_pad_mask,
     
     return full_probs
 def calculate_physical_fidelity_components(probs, 
-                                           U_stack=None, cost_tensor=None, device=None):
+                                           U_stack=None, cost_tensor=None, device=None,
+                                           noise_scale=1.0):
     """
-    Flexible physics engine. 
-    - Can take 'logits' (Standard Training): Computes Softmax & STE internally.
-    - Can take 'probs' (Autoregressive): Uses pre-computed probabilities directly.
+    Flexible physics engine with Hardware-Aware Scaling.
+    
+    Args:
+        probs: (B, L, V) Soft probability distribution from Gumbel-Softmax.
+        U_stack: (V, 2^n, 2^n) Tensor of unitary matrices.
+        cost_tensor: (V,) Tensor of raw gate error probabilities (p).
+        device: torch.device
+        noise_scale (float): A scalar calibration factor to map 'Raw p' to 'Fidelity Loss'.
+                             For Depolarizing Noise on 3 qubits, use ~2.0.
+                             For simple sum-of-errors, use 1.0.
     """
     
     # --- 1. Determine Probabilities ---
-    # A. Use Pre-computed Probs (e.g. from Gumbel-Softmax Autoregression)
-    # We assume these already have the desired gradients and "hardness" baked in.
     probs_gates = probs.float()
-    
-    # Infer dimensions
     B, Lc, V = probs.shape
     
-    # For life masking, we extract the EOS probability directly
+    # Extract EOS prob for Life Masking
     p_eos_ste = probs[:, :, EOS_CIRC_ID2]
 
     # --- 2. Compute Life Mask ---
-    # Since p_eos_ste comes from either Gumbel(Hard) or our internal STE,
-    # it is strictly 0.0 or 1.0 (with gradients).
+    # Standard autoregressive masking: signal dies after EOS
     p_continue = 1.0 - p_eos_ste
     life_mask = torch.cumprod(p_continue, dim=1)
     
-    # Shift logic: If EOS is at t, then t is the start of padding (Identity)
+    # Shift logic: If EOS is at t, the circuit is valid up to t.
+    # We shift right so the mask drops to 0 *after* the EOS token.
     life_mask = torch.roll(life_mask, shifts=1, dims=1)
     life_mask[:, 0] = 1.0
     
@@ -163,22 +167,30 @@ def calculate_physical_fidelity_components(probs,
     life_mask_U = life_mask.unsqueeze(-1).unsqueeze(-1).to(dtype=U_stack.dtype)
     life_mask_noise = life_mask.to(dtype=cost_tensor.dtype)
 
-    # --- 3. Compute Unitary ---
-    # Mix Gates
+    # --- 3. Compute Unitary (Ideal Physics) ---
+    # Weighted sum of gates
     U_seq = torch.einsum("blv,vij->blij", probs_gates.to(U_stack.dtype), U_stack)
     I = torch.eye(8, dtype=U_stack.dtype, device=device).view(1, 1, 8, 8)
     
-    # Mix: (Alive * Gate) + (Dead * Identity)
+    # Apply Mask: (Alive * Gate) + (Dead * Identity)
     U_effective_seq = life_mask_U * U_seq + (1.0 - life_mask_U) * I
     
+    # Parallel Product (O(log L))
     U_final = parallel_unitary_product(U_effective_seq)
 
-    # --- 4. Compute Noise ---
+    # --- 4. Compute Noise (Hardware Physics) ---
+    # A. Expected raw cost per step (e.g. 0.01 for CNOT)
     step_costs = torch.einsum("blv,v->bl", probs_gates.float(), cost_tensor)
+    
+    # B. Mask out costs after EOS
     valid_step_costs = step_costs * life_mask_noise
-    total_noise = valid_step_costs.sum(dim=1)
+    
+    # C. Sum and Scale
+    # We multiply by noise_scale to allow for testing on different noise scales. This is different from a lambda on the loss because the fidelity loss can only be from 0 to 1
+    total_noise = valid_step_costs.sum(dim=1) * noise_scale
+    fidelity_loss = 1.0 - torch.exp(-total_noise)
 
-    return U_final, total_noise
+    return U_final, fidelity_loss
 
 def collate_supervised2(batch: List[Dict[str, object]]):
     spec_tensors = [item["spec_tensor"].numpy() for item in batch]
@@ -231,7 +243,8 @@ def build_simplified_dataloader2(num_samples: int, batch_size: int, n_qubits: in
 
 def train_supervised_epoch2(model, dataloader, optimizer, device,
                             use_unitary_loss=False, lambda_sup=1.0, lambda_U=0.0,
-                            softmax_temp=1.0, use_noise=False, lambda_noise=0.0):
+                            softmax_temp=1.0, use_noise=False, lambda_noise=0.0,
+                            noise_scale: float = 1.0):
     model.train()
     criterion = nn.CrossEntropyLoss(ignore_index=PAD_ID2)
     total_loss = 0.0
@@ -287,7 +300,8 @@ def train_supervised_epoch2(model, dataloader, optimizer, device,
                     probs=probs_gen, 
                     U_stack=U_stack, 
                     cost_tensor=cost_tensor, 
-                    device=device
+                    device=device,
+                    noise_scale=noise_scale,
                 )
                 
                 
@@ -305,7 +319,7 @@ def train_supervised_epoch2(model, dataloader, optimizer, device,
                 loss_U = 1.0 - fidelity.mean()
                 
                 if use_noise and lambda_noise > 0:
-                    loss_U = loss_U + lambda_noise * gate_noise.mean()
+                    loss_U = loss_U + lambda_noise/lambda_U * gate_noise.mean()
 
             loss = loss + lambda_U * loss_U
 
@@ -323,7 +337,8 @@ def train_supervised_epoch2(model, dataloader, optimizer, device,
 
 def evaluate_supervised_epoch2(model, dataloader, device,
                                use_unitary_loss=False, lambda_sup=1.0, lambda_U=0.0,
-                               softmax_temp=1.0, use_noise=False, lambda_noise=0.0):
+                               softmax_temp=1.0, use_noise=False, lambda_noise=0.0,
+                               noise_scale: float = 1.0):
     model.eval()
     criterion = nn.CrossEntropyLoss(ignore_index=PAD_ID2)
     total_loss = 0.0
@@ -374,7 +389,8 @@ def evaluate_supervised_epoch2(model, dataloader, device,
                     probs=probs_gen, 
                     U_stack=U_stack, 
                     cost_tensor=cost_tensor, 
-                    device=device
+                    device=device,
+                    noise_scale=noise_scale,
                 )
                 
                 # Target Unitary (From Reference)

@@ -43,6 +43,7 @@ LAMBDA_SUP=${LAMBDA_SUP:-1.0}
 LAMBDA_U=${LAMBDA_U:-1.0}
 USE_NOISE=${USE_NOISE:-1}
 LAMBDA_NOISE=${LAMBDA_NOISE:-0.0} # Not used for curriculum learning, can be set to any value
+NOISE_SCALE=${NOISE_SCALE:-1.0}
 SOFTMAX_TEMP=${SOFTMAX_TEMP:-1.0}
 TEMP_MIN=${TEMP_MIN:-0.1}
 TEMP_SCHEDULE=${TEMP_SCHEDULE:-cosine}
@@ -79,6 +80,7 @@ python3 -u qcgpt2/scripts2/train_supervised2.py \
   --lambda_U ${LAMBDA_U} \
   $( [ "$USE_NOISE" = "1" ] && echo "--use_noise" ) \
   --lambda_noise ${LAMBDA_NOISE} \
+  --noise_scale ${NOISE_SCALE} \
   $( [ "$USE_CURRICULUM" = "1" ] && echo "--use_curriculum" ) \
   --curriculum_start_depth ${CURRICULUM_START_DEPTH} \
   --curriculum_end_depth ${CURRICULUM_END_DEPTH} \

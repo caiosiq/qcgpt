@@ -1,0 +1,17 @@
+  0%|          | 0/500 [00:00<?, ?it/s]  0%|          | 0/500 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 190, in <module>
+    run_evaluation(args.p1, args.p2, args.out, args.samples)
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 121, in run_evaluation
+    fid_p1, tokens_p1 = predict_and_eval(model_p1, "Phase I")
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/scripts2/evaluate_model_fidelities.py", line 102, in predict_and_eval
+    probs = generate_differentiable_logits(
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/training2/supervised.py", line 76, in generate_differentiable_logits
+    memory = model.encoder(spec_batch, spec_pad_mask)
+  File "/home/caiosiq/.conda/envs/qcgpt/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1736, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+  File "/home/caiosiq/.conda/envs/qcgpt/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1747, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/orcd/home/002/caiosiq/qcgpt/qcgpt2/models2/transformer.py", line 17, in forward
+    B, n_pairs, F = spec_batch.shape
+ValueError: too many values to unpack (expected 3)

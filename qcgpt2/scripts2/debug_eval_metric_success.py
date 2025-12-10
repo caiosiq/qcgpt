@@ -1,3 +1,8 @@
+"""QCGPT2 Fidelity Debugging Script
+
+Runs two evaluation paths (real-world Qiskit fidelity vs training-path
+fidelity) and reports discrepancies to help diagnose metric drift.
+"""
 import torch
 import numpy as np
 import argparse

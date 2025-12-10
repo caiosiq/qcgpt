@@ -118,22 +118,27 @@ Shape: `spec_tensor ∈ ℝ^{n_states × 2 × 2^{n_qubits} × 2}`
 
 **Key features**:
 - **Separate learning rates**: `--lr_enc` and `--lr_dec` for encoder/decoder
+- **Learning rate schedulers**: `none`, `cosine`, `step`, `exp`, `exp_warmup` (with warmup epochs)
 - **Temperature annealing**: `--temp_schedule` (cosine/linear/exp/none), `--softmax_temp`, `--temp_min`
 - **Unitary reconstruction loss**: `--use_unitary_loss` with `--lambda_U` weight
+- **Noise loss**: `--use_noise` with `--lambda_noise` weight (penalizes gate count/complexity)
+- **Curriculum learning**: Progressive depth and noise weight scheduling
 - **Supervised loss**: Cross-entropy with `--lambda_sup` weight
 - **Resume support**: Automatically loads config, optimizer, scheduler states
-- **Checkpoint management**: Saves best model, periodic epoch checkpoints, loss CSV
+- **Checkpoint management**: Saves best model, periodic epoch checkpoints, loss CSV with curriculum info
 
 **Training modes**:
 - **Supervised only**: `lambda_sup > 0`, `lambda_U = 0`
 - **Unitary loss only**: `lambda_sup = 0`, `lambda_U > 0`
 - **Mixed**: Both losses combined (recommended for fine-tuning)
+- **With noise penalty**: `use_noise=True`, `lambda_noise > 0` adds gate count penalty to unitary loss
 
 **Loss components**:
 1. **Supervised loss**: `L_sup = CrossEntropy(logits, target_tokens)` (teacher forcing)
-2. **Unitary loss**: `L_U = ||U_pred - U_target||²` where:
+2. **Unitary loss**: `L_U = ||U_pred - U_target||² + λ_noise · gate_noise` where:
    - `U_pred` = unitary from autoregressively generated circuit (via Gumbel-Softmax)
    - `U_target` = unitary from reference circuit
+   - `gate_noise` = weighted sum of gate costs (penalizes complex gates)
    - Uses parallel tree reduction for efficient matrix multiplication
 
 **Temperature annealing**:
@@ -141,6 +146,15 @@ Shape: `spec_tensor ∈ ℝ^{n_states × 2 × 2^{n_qubits} × 2}`
 - Cosine: `T(ep) = T_max - (T_max - T_min) * 0.5 * (1 - cos(π * (ep-1)/(total-1)))`
 - Linear: `T(ep) = T_max + (ep-1)/(total-1) * (T_min - T_max)`
 - Exponential: `T(ep) = T_max * (T_min/T_max)^((ep-1)/(total-1))`
+- None: Fixed temperature (no annealing)
+
+**Curriculum Learning**:
+- Progressive difficulty scheduling for depth and noise weight
+- **Depth schedule**: Step-wise increase from `start_depth` to `end_depth`
+  - Increases by `depth_step` every `increase_every` epochs
+  - Dataset is automatically rebuilt when depth changes
+- **Noise schedule**: Linear warmup from 0 to `max_noise_weight` over `noise_warmup_epochs`
+- Automatically adjusts on resume to match the correct epoch
 
 ### Command-Line Usage
 
@@ -171,6 +185,41 @@ python qcgpt2/scripts2/train_supervised2.py \
   --resume_dir /path/to/checkpoint/folder
 ```
 
+**Training with curriculum learning**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --num_epochs 200 \
+  --num_samples 200000 \
+  --batch_size 512 \
+  --lr_enc 5e-6 \
+  --lr_dec 2e-5 \
+  --use_unitary_loss \
+  --lambda_sup 0.1 \
+  --lambda_U 1.0 \
+  --use_noise \
+  --use_curriculum \
+  --curriculum_start_depth 8 \
+  --curriculum_end_depth 32 \
+  --curriculum_max_noise 0.1 \
+  --curriculum_noise_warmup 30 \
+  --curriculum_depth_step 4 \
+  --curriculum_increase_every 10 \
+  --softmax_temp 1.0 \
+  --temp_min 0.1 \
+  --temp_schedule cosine
+```
+
+**Training with warmup scheduler**:
+```bash
+python qcgpt2/scripts2/train_supervised2.py \
+  --num_epochs 200 \
+  --scheduler exp_warmup \
+  --warmup_epochs 15 \
+  --gamma 0.98 \
+  --lr_enc 1e-7 \
+  --lr_dec 4e-6
+```
+
 The resume script automatically:
 - Loads config from `{prefix}_config.txt`
 - Finds latest epoch checkpoint
@@ -183,11 +232,20 @@ The resume script automatically:
 - `--num_samples`: Dataset size
 - `--batch_size`: Batch size
 - `--lr_enc`, `--lr_dec`: Separate learning rates (or use `--lr` for single rate)
-- `--scheduler`: `none`, `cosine`, `step`, `exp`
+- `--scheduler`: `none`, `cosine`, `step`, `exp`, `exp_warmup` (exponential with warmup)
+- `--warmup_epochs`: Epochs for LR warmup (used with `exp_warmup` scheduler)
 - `--use_unitary_loss`: Enable unitary reconstruction loss
 - `--lambda_sup`, `--lambda_U`: Loss weights
+- `--use_noise`: Enable noise/gate complexity penalty
+- `--lambda_noise`: Weight for noise penalty (only used if `--use_noise`)
+- `--use_curriculum`: Enable curriculum learning
+- `--curriculum_start_depth`, `--curriculum_end_depth`: Depth range for curriculum
+- `--curriculum_max_noise`: Maximum noise weight in curriculum
+- `--curriculum_noise_warmup`: Epochs to warmup noise weight
+- `--curriculum_depth_step`: Depth increment per step
+- `--curriculum_increase_every`: Epochs between depth increases
 - `--softmax_temp`, `--temp_min`, `--temp_schedule`: Temperature annealing
-- `--raw_max_depth`: Maximum circuit depth in dataset
+- `--raw_max_depth`: Maximum circuit depth in dataset (ignored if curriculum enabled)
 - `--basis_only`: Use only computational basis states
 - `--n_random_states`: Additional random states beyond basis
 - `--ckpt`: Initial checkpoint to load (for transfer learning)
@@ -195,10 +253,11 @@ The resume script automatically:
 
 ### Batch Jobs (SLURM)
 
-**Training** (`batch_jobs/gpt2_jobs/batch_midtrain2.slurm`):
-```bash
-sbatch batch_jobs/gpt2_jobs/batch_midtrain2.slurm
-```
+**Training scripts**:
+- `batch_1pretrain2.slurm`: Initial pretraining
+- `batch_2midtrain2.slurm`: Mid-training with curriculum
+- `batch_3teach_noise2.slurm`: Fine-tuning with noise penalty (fixed temperature)
+- `batch_curriculum_learning2.slurm`: Full curriculum learning setup
 
 **Resume** (`batch_jobs/gpt2_jobs/resume_batch_train2.slurm`):
 ```bash
@@ -207,8 +266,15 @@ sbatch batch_jobs/gpt2_jobs/resume_batch_train2.slurm /path/to/checkpoint/folder
 
 **Configuration**: Edit SLURM scripts or set environment variables:
 - `LR_ENC`, `LR_DEC`: Learning rates
+- `SCHEDULER`: `none`, `cosine`, `step`, `exp`, `exp_warmup`
+- `WARMUP_EPOCHS`: Epochs for LR warmup (with `exp_warmup` scheduler)
 - `SOFTMAX_TEMP`, `TEMP_MIN`, `TEMP_SCHEDULE`: Temperature annealing
 - `LAMBDA_SUP`, `LAMBDA_U`: Loss weights
+- `USE_NOISE`, `LAMBDA_NOISE`: Noise penalty configuration
+- `USE_CURRICULUM`: Enable curriculum learning
+- `CURRICULUM_START_DEPTH`, `CURRICULUM_END_DEPTH`: Depth range
+- `CURRICULUM_MAX_NOISE`, `CURRICULUM_NOISE_WARMUP`: Noise curriculum
+- `CURRICULUM_DEPTH_STEP`, `CURRICULUM_INCREASE_EVERY`: Depth schedule
 - `EPOCHS`, `SAMPLES`, `BATCH`: Training parameters
 
 ### Checkpoint Structure
@@ -217,6 +283,8 @@ Each training run creates a directory (e.g., `model_checkpoints/qcgpt2_mid_20251
 
 - `{prefix}_config.txt`: All training hyperparameters (saved automatically)
 - `{prefix}_loss.csv`: Training/validation loss per epoch
+  - Without curriculum: `epoch,train_loss,val_loss`
+  - With curriculum: `epoch,train_loss,val_loss,depth,lambda_noise`
 - `{prefix}_best.pt`: Best model (lowest validation loss)
 - `{prefix}_e{N}.pt`: Epoch checkpoints (every 10 epochs)
   - Contains: `model_state_dict`, `optimizer_state_dict`, `scheduler_state_dict`, `epoch`
@@ -228,11 +296,23 @@ num_epochs_total=200
 batch_size=512
 lr_enc=5e-06
 lr_dec=2e-05
+scheduler=exp_warmup
+warmup_epochs=15
+gamma=0.98
 softmax_temp=1.0
 temp_min=0.1
 temp_schedule=cosine
 lambda_sup=0.1
 lambda_U=1.0
+use_noise=True
+lambda_noise=1.0
+use_curriculum=True
+curriculum_start_depth=8
+curriculum_end_depth=32
+curriculum_max_noise=1.0
+curriculum_noise_warmup=20
+curriculum_depth_step=4
+curriculum_increase_every=5
 ...
 ```
 
@@ -240,22 +320,58 @@ lambda_U=1.0
 
 ## Evaluation
 
-**Policy evaluation** (`qcgpt2/scripts2/eval_policy2.py`):
-```bash
-python qcgpt2/scripts2/eval_policy2.py \
-  --ckpt /path/to/checkpoint.pt \
-  --num_examples 100 \
-  --max_len 64
-```
+**Key QCGPT2 Scripts**
 
-**Grid evaluation** (`qcgpt2/scripts2/eval_grid2.py`):
-- Generates grid of reference vs candidate circuits
-- Computes fidelities and gate counts
-- Exports CSV results
+- `qcgpt2/scripts2/train_supervised2.py`
+  - Supervised training of `CircuitPolicy2` from synthetic spec–circuit pairs
+  - Options: curriculum (depth/noise), unitary loss, schedulers, separate LR for encoder/decoder
+  - Outputs: `model_checkpoints/<RUN_NAME>/<PREFIX>_best.pt` and `<PREFIX>_final.pt`; loss CSV logs (with curriculum info when enabled)
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/train_supervised2.py \
+      --num_epochs 200 --num_samples 200000 --batch_size 512 \
+      --use_unitary_loss --lambda_sup 0.1 --lambda_U 1.0 \
+      --use_curriculum --curriculum_start_depth 8 --curriculum_end_depth 32
+    ```
 
-**Model comparison** (`qcgpt2/scripts2/compare_models.py`):
-- Compare multiple checkpoints side-by-side
-- Statistical analysis of performance differences
+- `qcgpt2/scripts2/eval_policy2.py`
+  - Evaluates a trained policy by sampling candidate circuits for random tasks
+  - Reports unitary-based fidelity and gate counts; supports decode strategies `greedy`, `beam`, `topk`, `topp`
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/eval_policy2.py --ckpt /path/to/model.pt --num_examples 100 --max_len 64
+    ```
+
+- `qcgpt2/scripts2/eval_grid2.py`
+  - Generates a grid figure of Qiskit-drawn circuits comparing reference vs reconstructed candidates
+  - Saves `model_evaluations/<RUN_NAME>/circuits_grid.png` and `fidelities.csv` with per-cell fidelities
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/eval_grid2.py \
+      --ckpt /path/to/model.pt --num_rows 16 --num_cols 16 --max_len 32 --max_gates_ref 6 \
+      --out_dir model_evaluations --run_name eval_$(date +%Y%m%d_%H%M%S)
+    ```
+
+- `qcgpt2/scripts2/compare_models.py`
+  - Compares two checkpoints across a sampled dataset; produces CSV and plots in `comparison_results/`
+  - Example:
+    ```bash
+    python qcgpt2/scripts2/compare_models.py \
+      --ckpt_pre /path/to/pre.pt --ckpt_mid /path/to/mid.pt \
+      --num_samples 1000 --batch_size 100 --out_dir comparison_results
+    ```
+
+- `qcgpt2/scripts2/analyse_current_training.py`
+  - Loads pre/mid/fine checkpoints and evaluates them under consistent generation; writes histograms and summaries
+
+- `qcgpt2/scripts2/eval_unitary_debug.py`
+  - Diagnostic script for Gumbel-Softmax-based differentiable generation and soft unitary computation; contrasts training vs real-world fidelities
+
+- `qcgpt2/scripts2/eval_gumbel_reconstruct.py`
+  - Minimal example of constructing token sequences via Gumbel-Softmax from decoder logits
+
+- `qcgpt2/scripts2/vocab_map2.py`
+  - Prints a JSON mapping of tokens to gate types and targets (vocabulary introspection)
 
 ---
 
@@ -335,6 +451,13 @@ Similar structure but with separate gate/qubit tokenization. See original README
 ### Batch Jobs (`batch_jobs/`)
 
 - `gpt2_jobs/`: SLURM scripts for QCGPT2 training/evaluation
+  - `batch_1pretrain2.slurm`: Initial pretraining
+  - `batch_2midtrain2.slurm`: Mid-training with curriculum
+  - `batch_3teach_noise2.slurm`: Fine-tuning with noise penalty
+  - `batch_curriculum_learning2.slurm`: Curriculum learning configuration
+  - `batch_eval2.slurm`: Model evaluation
+  - `batch_analyse_training.slurm`: Training analysis
+  - `resume_batch_train2.slurm`: Resume training from checkpoint
 - `gpt1_jobs/`: SLURM scripts for QCGPT1 (legacy)
 - `logs/`: Job output logs
 
@@ -377,10 +500,11 @@ For each pair `i ∈ {1..n_states}` and basis index `j ∈ {0..2^n−1}`:
 **Unitary loss** (QCGPT2):
 - Generate circuit via Gumbel-Softmax: `probs = GumbelSoftmax(logits, temp)`
 - Compute unitary: `U_pred = ∏_t U_gate(probs[t])` (parallel tree reduction)
-- Loss: `L_U = ||U_pred - U_target||²_F`
+- Loss: `L_U = ||U_pred - U_target||²_F + λ_noise · gate_noise`
 
 **Total loss**:
 - `L = λ_sup · L_sup + λ_U · L_U`
+- If `use_noise=True`: `L_U` includes gate complexity penalty
 
 ---
 
@@ -390,9 +514,13 @@ For each pair `i ∈ {1..n_states}` and basis index `j ∈ {0..2^n−1}`:
 
 1. **Gate-with-target tokens**: Simpler vocabulary, no grammar constraints needed
 2. **Unitary loss**: Direct physics-based training signal
-3. **Temperature annealing**: Smooth exploration → exploitation transition
-4. **Separate learning rates**: Fine-grained control over encoder/decoder training
-5. **Resume support**: Seamless continuation with state preservation
+3. **Noise penalty**: Gate complexity regularization via `lambda_noise`
+4. **Curriculum learning**: Progressive difficulty scheduling for depth and noise
+5. **Temperature annealing**: Smooth exploration → exploitation transition
+6. **Learning rate warmup**: `exp_warmup` scheduler with configurable warmup epochs
+7. **Separate learning rates**: Fine-grained control over encoder/decoder training
+8. **Resume support**: Seamless continuation with state preservation and curriculum adjustment
+9. **Enhanced logging**: CSV includes curriculum depth and noise weight when enabled
 
 ### Future Extensions
 
