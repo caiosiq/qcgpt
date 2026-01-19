@@ -1,0 +1,10 @@
+------------------------------------------------
+Running QCGPT3 Noise Model Validation
+Date: Sat Jan  3 00:29:52 EST 2026
+------------------------------------------------
+
+--- Test 2: Noise Model (Fidelity Proxy) ---
+Simulating 50 circuits with variable depths...
+Pearson Correlation: 0.9358
+Plot saved to: /orcd/home/002/caiosiq/qcgpt/qcgpt3/architecture_validation/results/noise_model_correlation.png
+PASS: Strong correlation between Proxy Cost and Real Noise.

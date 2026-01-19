@@ -1,0 +1,110 @@
+------------------------------------------------
+Starting Stage 1: The Bootcamp
+Date: Mon Jan  5 15:25:25 EST 2026
+------------------------------------------------
+Loading config from qcgpt3/configs/big_entangle_stage1_bootcamp.json
+Created run directory: model_checkpoints/qcgpt3_big_entangle_stage1_bootcamp
+Building dataloader with max_depth=8
+[HighPerformanceDataset] Configured for 500000 samples. QDPE-accelerated.
+Starting training from epoch 1 to 100
+Epoch 001 | T_Loss: 4.9856 (loss_sup: 4.0405 | loss_ent_teacher: 0.0473) | V_Loss: 4.5194 (loss_sup: 3.8480 | loss_ent_teacher: 0.0333) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 002 | T_Loss: 4.5321 (loss_sup: 3.8450 | loss_ent_teacher: 0.0344) | V_Loss: 4.4932 (loss_sup: 3.8331 | loss_ent_teacher: 0.0327) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 003 | T_Loss: 4.5135 (loss_sup: 3.8312 | loss_ent_teacher: 0.0341) | V_Loss: 4.4764 (loss_sup: 3.8173 | loss_ent_teacher: 0.0327) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 004 | T_Loss: 4.4084 (loss_sup: 3.7254 | loss_ent_teacher: 0.0341) | V_Loss: 4.2552 (loss_sup: 3.5950 | loss_ent_teacher: 0.0328) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 005 | T_Loss: 4.2288 (loss_sup: 3.5461 | loss_ent_teacher: 0.0341) | V_Loss: 4.1076 (loss_sup: 3.4497 | loss_ent_teacher: 0.0327) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 006 | T_Loss: 4.1048 (loss_sup: 3.4232 | loss_ent_teacher: 0.0341) | V_Loss: 3.9943 (loss_sup: 3.3368 | loss_ent_teacher: 0.0327) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 007 | T_Loss: 4.0094 (loss_sup: 3.3284 | loss_ent_teacher: 0.0341) | V_Loss: 3.9021 (loss_sup: 3.2442 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 008 | T_Loss: 3.9260 (loss_sup: 3.2452 | loss_ent_teacher: 0.0340) | V_Loss: 3.8121 (loss_sup: 3.1535 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 009 | T_Loss: 3.8447 (loss_sup: 3.1641 | loss_ent_teacher: 0.0340) | V_Loss: 3.7219 (loss_sup: 3.0637 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.98e-04 | LR_Dec: 1.98e-04
+Epoch 010 | T_Loss: 3.7620 (loss_sup: 3.0816 | loss_ent_teacher: 0.0340) | V_Loss: 3.6330 (loss_sup: 2.9759 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.98e-04 | LR_Dec: 1.98e-04
+Epoch 011 | T_Loss: 3.6796 (loss_sup: 2.9993 | loss_ent_teacher: 0.0340) | V_Loss: 3.5446 (loss_sup: 2.8871 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.97e-04 | LR_Dec: 1.97e-04
+Epoch 012 | T_Loss: 3.6025 (loss_sup: 2.9223 | loss_ent_teacher: 0.0340) | V_Loss: 3.4676 (loss_sup: 2.8100 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.97e-04 | LR_Dec: 1.97e-04
+Epoch 013 | T_Loss: 3.5342 (loss_sup: 2.8541 | loss_ent_teacher: 0.0340) | V_Loss: 3.4020 (loss_sup: 2.7430 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.96e-04 | LR_Dec: 1.96e-04
+Epoch 014 | T_Loss: 3.4718 (loss_sup: 2.7918 | loss_ent_teacher: 0.0340) | V_Loss: 3.3416 (loss_sup: 2.6829 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.96e-04 | LR_Dec: 1.96e-04
+Epoch 015 | T_Loss: 3.4058 (loss_sup: 2.7258 | loss_ent_teacher: 0.0340) | V_Loss: 3.2504 (loss_sup: 2.5923 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.95e-04 | LR_Dec: 1.95e-04
+Epoch 016 | T_Loss: 3.3255 (loss_sup: 2.6455 | loss_ent_teacher: 0.0340) | V_Loss: 3.1757 (loss_sup: 2.5172 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.94e-04 | LR_Dec: 1.94e-04
+Epoch 017 | T_Loss: 3.2626 (loss_sup: 2.5825 | loss_ent_teacher: 0.0340) | V_Loss: 3.1143 (loss_sup: 2.4558 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.94e-04 | LR_Dec: 1.94e-04
+Epoch 018 | T_Loss: 3.2108 (loss_sup: 2.5308 | loss_ent_teacher: 0.0340) | V_Loss: 3.0620 (loss_sup: 2.4042 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.93e-04 | LR_Dec: 1.93e-04
+Epoch 019 | T_Loss: 3.1649 (loss_sup: 2.4849 | loss_ent_teacher: 0.0340) | V_Loss: 3.0227 (loss_sup: 2.3639 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.92e-04 | LR_Dec: 1.92e-04
+Epoch 020 | T_Loss: 3.1429 (loss_sup: 2.4685 | loss_ent_teacher: 0.0337) | V_Loss: 3.1007 (loss_sup: 2.4427 | loss_ent_teacher: 0.0326) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.91e-04 | LR_Dec: 1.91e-04
+Epoch 021 | T_Loss: 3.0556 (loss_sup: 2.4575 | loss_ent_teacher: 0.0299) | V_Loss: 2.5911 (loss_sup: 2.4016 | loss_ent_teacher: 0.0095) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.90e-04 | LR_Dec: 1.90e-04
+Epoch 022 | T_Loss: 2.6051 (loss_sup: 2.4388 | loss_ent_teacher: 0.0083) | V_Loss: 2.4443 (loss_sup: 2.3029 | loss_ent_teacher: 0.0071) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.90e-04 | LR_Dec: 1.90e-04
+Epoch 023 | T_Loss: 2.5258 (loss_sup: 2.3879 | loss_ent_teacher: 0.0069) | V_Loss: 2.3859 (loss_sup: 2.2612 | loss_ent_teacher: 0.0063) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.89e-04 | LR_Dec: 1.89e-04
+Epoch 024 | T_Loss: 2.4804 (loss_sup: 2.3555 | loss_ent_teacher: 0.0062) | V_Loss: 2.3499 (loss_sup: 2.2363 | loss_ent_teacher: 0.0057) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.88e-04 | LR_Dec: 1.88e-04
+Epoch 025 | T_Loss: 2.4431 (loss_sup: 2.3269 | loss_ent_teacher: 0.0058) | V_Loss: 2.3134 (loss_sup: 2.2062 | loss_ent_teacher: 0.0054) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.87e-04 | LR_Dec: 1.87e-04
+Epoch 026 | T_Loss: 2.4104 (loss_sup: 2.3006 | loss_ent_teacher: 0.0055) | V_Loss: 2.2853 (loss_sup: 2.1785 | loss_ent_teacher: 0.0053) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.86e-04 | LR_Dec: 1.86e-04
+Epoch 027 | T_Loss: 2.3827 (loss_sup: 2.2774 | loss_ent_teacher: 0.0053) | V_Loss: 2.2580 (loss_sup: 2.1586 | loss_ent_teacher: 0.0050) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.84e-04 | LR_Dec: 1.84e-04
+Epoch 028 | T_Loss: 2.3551 (loss_sup: 2.2537 | loss_ent_teacher: 0.0051) | V_Loss: 2.2300 (loss_sup: 2.1322 | loss_ent_teacher: 0.0048) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.83e-04 | LR_Dec: 1.83e-04
+Epoch 029 | T_Loss: 2.3306 (loss_sup: 2.2327 | loss_ent_teacher: 0.0049) | V_Loss: 2.2075 (loss_sup: 2.1146 | loss_ent_teacher: 0.0046) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.82e-04 | LR_Dec: 1.82e-04
+Epoch 030 | T_Loss: 2.3075 (loss_sup: 2.2121 | loss_ent_teacher: 0.0048) | V_Loss: 2.1902 (loss_sup: 2.0990 | loss_ent_teacher: 0.0045) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.81e-04 | LR_Dec: 1.81e-04
+Epoch 031 | T_Loss: 2.2836 (loss_sup: 2.1910 | loss_ent_teacher: 0.0046) | V_Loss: 2.1591 (loss_sup: 2.0692 | loss_ent_teacher: 0.0044) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.80e-04 | LR_Dec: 1.80e-04
+Epoch 032 | T_Loss: 2.2622 (loss_sup: 2.1721 | loss_ent_teacher: 0.0045) | V_Loss: 2.1400 (loss_sup: 2.0512 | loss_ent_teacher: 0.0044) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.78e-04 | LR_Dec: 1.78e-04
+Epoch 033 | T_Loss: 2.2419 (loss_sup: 2.1538 | loss_ent_teacher: 0.0044) | V_Loss: 2.1218 (loss_sup: 2.0337 | loss_ent_teacher: 0.0043) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.77e-04 | LR_Dec: 1.77e-04
+Epoch 034 | T_Loss: 2.2208 (loss_sup: 2.1347 | loss_ent_teacher: 0.0043) | V_Loss: 2.1092 (loss_sup: 2.0222 | loss_ent_teacher: 0.0043) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.76e-04 | LR_Dec: 1.76e-04
+Epoch 035 | T_Loss: 2.2029 (loss_sup: 2.1179 | loss_ent_teacher: 0.0043) | V_Loss: 2.0898 (loss_sup: 2.0039 | loss_ent_teacher: 0.0041) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.74e-04 | LR_Dec: 1.74e-04
+Epoch 036 | T_Loss: 2.1834 (loss_sup: 2.0994 | loss_ent_teacher: 0.0042) | V_Loss: 2.0667 (loss_sup: 1.9811 | loss_ent_teacher: 0.0042) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.73e-04 | LR_Dec: 1.73e-04
+Epoch 037 | T_Loss: 2.1651 (loss_sup: 2.0823 | loss_ent_teacher: 0.0041) | V_Loss: 2.0575 (loss_sup: 1.9738 | loss_ent_teacher: 0.0040) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.71e-04 | LR_Dec: 1.71e-04
+Epoch 038 | T_Loss: 2.1468 (loss_sup: 2.0658 | loss_ent_teacher: 0.0041) | V_Loss: 2.0348 (loss_sup: 1.9497 | loss_ent_teacher: 0.0040) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.70e-04 | LR_Dec: 1.70e-04
+Epoch 039 | T_Loss: 2.1305 (loss_sup: 2.0501 | loss_ent_teacher: 0.0040) | V_Loss: 2.0116 (loss_sup: 1.9299 | loss_ent_teacher: 0.0039) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.68e-04 | LR_Dec: 1.68e-04
+Epoch 040 | T_Loss: 2.1128 (loss_sup: 2.0337 | loss_ent_teacher: 0.0040) | V_Loss: 2.0020 (loss_sup: 1.9216 | loss_ent_teacher: 0.0039) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.67e-04 | LR_Dec: 1.67e-04
+Epoch 041 | T_Loss: 2.0972 (loss_sup: 2.0189 | loss_ent_teacher: 0.0039) | V_Loss: 1.9900 (loss_sup: 1.9116 | loss_ent_teacher: 0.0038) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.65e-04 | LR_Dec: 1.65e-04
+Epoch 042 | T_Loss: 2.0830 (loss_sup: 2.0055 | loss_ent_teacher: 0.0039) | V_Loss: 1.9747 (loss_sup: 1.8955 | loss_ent_teacher: 0.0038) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.64e-04 | LR_Dec: 1.64e-04
+Epoch 043 | T_Loss: 2.0662 (loss_sup: 1.9902 | loss_ent_teacher: 0.0038) | V_Loss: 1.9534 (loss_sup: 1.8746 | loss_ent_teacher: 0.0038) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.62e-04 | LR_Dec: 1.62e-04
+Epoch 044 | T_Loss: 2.0530 (loss_sup: 1.9775 | loss_ent_teacher: 0.0038) | V_Loss: 1.9444 (loss_sup: 1.8680 | loss_ent_teacher: 0.0037) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.60e-04 | LR_Dec: 1.60e-04
+Epoch 045 | T_Loss: 2.0373 (loss_sup: 1.9634 | loss_ent_teacher: 0.0037) | V_Loss: 1.9265 (loss_sup: 1.8517 | loss_ent_teacher: 0.0036) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.59e-04 | LR_Dec: 1.59e-04
+Epoch 046 | T_Loss: 2.0233 (loss_sup: 1.9506 | loss_ent_teacher: 0.0036) | V_Loss: 1.9145 (loss_sup: 1.8423 | loss_ent_teacher: 0.0035) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.57e-04 | LR_Dec: 1.57e-04
+Epoch 047 | T_Loss: 2.0077 (loss_sup: 1.9384 | loss_ent_teacher: 0.0035) | V_Loss: 1.8980 (loss_sup: 1.8318 | loss_ent_teacher: 0.0032) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.55e-04 | LR_Dec: 1.55e-04
+Epoch 048 | T_Loss: 1.9914 (loss_sup: 1.9271 | loss_ent_teacher: 0.0032) | V_Loss: 1.8782 (loss_sup: 1.8180 | loss_ent_teacher: 0.0029) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.54e-04 | LR_Dec: 1.54e-04
+Epoch 049 | T_Loss: 1.9734 (loss_sup: 1.9153 | loss_ent_teacher: 0.0029) | V_Loss: 1.8653 (loss_sup: 1.8072 | loss_ent_teacher: 0.0027) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.52e-04 | LR_Dec: 1.52e-04
+Epoch 050 | T_Loss: 1.9588 (loss_sup: 1.9047 | loss_ent_teacher: 0.0027) | V_Loss: 1.8533 (loss_sup: 1.8003 | loss_ent_teacher: 0.0025) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.50e-04 | LR_Dec: 1.50e-04
+Epoch 051 | T_Loss: 1.9446 (loss_sup: 1.8931 | loss_ent_teacher: 0.0026) | V_Loss: 1.8348 (loss_sup: 1.7832 | loss_ent_teacher: 0.0024) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.48e-04 | LR_Dec: 1.48e-04
+Epoch 052 | T_Loss: 1.9318 (loss_sup: 1.8819 | loss_ent_teacher: 0.0025) | V_Loss: 1.8278 (loss_sup: 1.7777 | loss_ent_teacher: 0.0023) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.46e-04 | LR_Dec: 1.46e-04
+Epoch 053 | T_Loss: 1.9195 (loss_sup: 1.8711 | loss_ent_teacher: 0.0024) | V_Loss: 1.8157 (loss_sup: 1.7673 | loss_ent_teacher: 0.0022) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.44e-04 | LR_Dec: 1.44e-04
+Epoch 054 | T_Loss: 1.9090 (loss_sup: 1.8615 | loss_ent_teacher: 0.0024) | V_Loss: 1.8086 (loss_sup: 1.7611 | loss_ent_teacher: 0.0022) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.43e-04 | LR_Dec: 1.43e-04
+Epoch 055 | T_Loss: 1.8967 (loss_sup: 1.8508 | loss_ent_teacher: 0.0023) | V_Loss: 1.7965 (loss_sup: 1.7482 | loss_ent_teacher: 0.0022) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.41e-04 | LR_Dec: 1.41e-04
+Epoch 056 | T_Loss: 1.8876 (loss_sup: 1.8421 | loss_ent_teacher: 0.0023) | V_Loss: 1.7848 (loss_sup: 1.7380 | loss_ent_teacher: 0.0021) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.39e-04 | LR_Dec: 1.39e-04
+Epoch 057 | T_Loss: 1.8765 (loss_sup: 1.8321 | loss_ent_teacher: 0.0022) | V_Loss: 1.7781 (loss_sup: 1.7313 | loss_ent_teacher: 0.0022) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.37e-04 | LR_Dec: 1.37e-04
+Epoch 058 | T_Loss: 1.8669 (loss_sup: 1.8233 | loss_ent_teacher: 0.0022) | V_Loss: 1.7646 (loss_sup: 1.7199 | loss_ent_teacher: 0.0021) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.35e-04 | LR_Dec: 1.35e-04
+Epoch 059 | T_Loss: 1.8570 (loss_sup: 1.8144 | loss_ent_teacher: 0.0021) | V_Loss: 1.7625 (loss_sup: 1.7185 | loss_ent_teacher: 0.0021) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.33e-04 | LR_Dec: 1.33e-04
+Epoch 060 | T_Loss: 1.8485 (loss_sup: 1.8065 | loss_ent_teacher: 0.0021) | V_Loss: 1.7533 (loss_sup: 1.7087 | loss_ent_teacher: 0.0021) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.31e-04 | LR_Dec: 1.31e-04
+Epoch 061 | T_Loss: 1.8389 (loss_sup: 1.7976 | loss_ent_teacher: 0.0021) | V_Loss: 1.7409 (loss_sup: 1.6982 | loss_ent_teacher: 0.0020) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.29e-04 | LR_Dec: 1.29e-04
+Epoch 062 | T_Loss: 1.8300 (loss_sup: 1.7894 | loss_ent_teacher: 0.0020) | V_Loss: 1.7386 (loss_sup: 1.6956 | loss_ent_teacher: 0.0020) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.27e-04 | LR_Dec: 1.27e-04
+Epoch 063 | T_Loss: 1.8222 (loss_sup: 1.7820 | loss_ent_teacher: 0.0020) | V_Loss: 1.7302 (loss_sup: 1.6879 | loss_ent_teacher: 0.0020) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.25e-04 | LR_Dec: 1.25e-04
+Epoch 064 | T_Loss: 1.8141 (loss_sup: 1.7742 | loss_ent_teacher: 0.0020) | V_Loss: 1.7229 (loss_sup: 1.6799 | loss_ent_teacher: 0.0020) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.23e-04 | LR_Dec: 1.23e-04
+Epoch 065 | T_Loss: 1.8066 (loss_sup: 1.7673 | loss_ent_teacher: 0.0020) | V_Loss: 1.7160 (loss_sup: 1.6745 | loss_ent_teacher: 0.0020) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.21e-04 | LR_Dec: 1.21e-04
+Epoch 066 | T_Loss: 1.7988 (loss_sup: 1.7596 | loss_ent_teacher: 0.0020) | V_Loss: 1.7093 (loss_sup: 1.6677 | loss_ent_teacher: 0.0019) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.19e-04 | LR_Dec: 1.19e-04
+Epoch 067 | T_Loss: 1.7911 (loss_sup: 1.7528 | loss_ent_teacher: 0.0019) | V_Loss: 1.7059 (loss_sup: 1.6663 | loss_ent_teacher: 0.0018) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.17e-04 | LR_Dec: 1.17e-04
+Epoch 068 | T_Loss: 1.7842 (loss_sup: 1.7462 | loss_ent_teacher: 0.0019) | V_Loss: 1.6958 (loss_sup: 1.6550 | loss_ent_teacher: 0.0019) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.15e-04 | LR_Dec: 1.15e-04
+Epoch 069 | T_Loss: 1.7773 (loss_sup: 1.7394 | loss_ent_teacher: 0.0019) | V_Loss: 1.6883 (loss_sup: 1.6488 | loss_ent_teacher: 0.0019) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.13e-04 | LR_Dec: 1.13e-04
+Epoch 070 | T_Loss: 1.7699 (loss_sup: 1.7326 | loss_ent_teacher: 0.0019) | V_Loss: 1.6917 (loss_sup: 1.6521 | loss_ent_teacher: 0.0018) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.10e-04 | LR_Dec: 1.10e-04
+Epoch 071 | T_Loss: 1.7639 (loss_sup: 1.7267 | loss_ent_teacher: 0.0019) | V_Loss: 1.6832 (loss_sup: 1.6423 | loss_ent_teacher: 0.0019) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.08e-04 | LR_Dec: 1.08e-04
+Epoch 072 | T_Loss: 1.7578 (loss_sup: 1.7206 | loss_ent_teacher: 0.0019) | V_Loss: 1.6732 (loss_sup: 1.6347 | loss_ent_teacher: 0.0018) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.06e-04 | LR_Dec: 1.06e-04
+Epoch 073 | T_Loss: 1.7508 (loss_sup: 1.7143 | loss_ent_teacher: 0.0018) | V_Loss: 1.6710 (loss_sup: 1.6312 | loss_ent_teacher: 0.0018) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.04e-04 | LR_Dec: 1.04e-04
+Epoch 074 | T_Loss: 1.7446 (loss_sup: 1.7084 | loss_ent_teacher: 0.0018) | V_Loss: 1.6657 (loss_sup: 1.6275 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.02e-04 | LR_Dec: 1.02e-04
+Epoch 075 | T_Loss: 1.7374 (loss_sup: 1.7015 | loss_ent_teacher: 0.0018) | V_Loss: 1.6566 (loss_sup: 1.6176 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.00e-04 | LR_Dec: 1.00e-04
+Epoch 076 | T_Loss: 1.7313 (loss_sup: 1.6962 | loss_ent_teacher: 0.0018) | V_Loss: 1.6545 (loss_sup: 1.6164 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 9.79e-05 | LR_Dec: 9.79e-05
+Epoch 077 | T_Loss: 1.7255 (loss_sup: 1.6902 | loss_ent_teacher: 0.0018) | V_Loss: 1.6441 (loss_sup: 1.6051 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 9.58e-05 | LR_Dec: 9.58e-05
+Epoch 078 | T_Loss: 1.7202 (loss_sup: 1.6854 | loss_ent_teacher: 0.0017) | V_Loss: 1.6398 (loss_sup: 1.6008 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 9.37e-05 | LR_Dec: 9.37e-05
+Epoch 079 | T_Loss: 1.7148 (loss_sup: 1.6801 | loss_ent_teacher: 0.0017) | V_Loss: 1.6431 (loss_sup: 1.6044 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 9.16e-05 | LR_Dec: 9.16e-05
+Epoch 080 | T_Loss: 1.7096 (loss_sup: 1.6751 | loss_ent_teacher: 0.0017) | V_Loss: 1.6365 (loss_sup: 1.5988 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 8.95e-05 | LR_Dec: 8.95e-05
+Epoch 081 | T_Loss: 1.7043 (loss_sup: 1.6701 | loss_ent_teacher: 0.0017) | V_Loss: 1.6280 (loss_sup: 1.5905 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 8.75e-05 | LR_Dec: 8.75e-05
+Epoch 082 | T_Loss: 1.6999 (loss_sup: 1.6656 | loss_ent_teacher: 0.0017) | V_Loss: 1.6248 (loss_sup: 1.5859 | loss_ent_teacher: 0.0018) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 8.54e-05 | LR_Dec: 8.54e-05
+Epoch 083 | T_Loss: 1.6944 (loss_sup: 1.6604 | loss_ent_teacher: 0.0017) | V_Loss: 1.6225 (loss_sup: 1.5839 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 8.33e-05 | LR_Dec: 8.33e-05
+Epoch 084 | T_Loss: 1.6897 (loss_sup: 1.6559 | loss_ent_teacher: 0.0017) | V_Loss: 1.6176 (loss_sup: 1.5796 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 8.13e-05 | LR_Dec: 8.13e-05
+Epoch 085 | T_Loss: 1.6851 (loss_sup: 1.6515 | loss_ent_teacher: 0.0017) | V_Loss: 1.6123 (loss_sup: 1.5742 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 7.92e-05 | LR_Dec: 7.92e-05
+Epoch 086 | T_Loss: 1.6803 (loss_sup: 1.6472 | loss_ent_teacher: 0.0017) | V_Loss: 1.6058 (loss_sup: 1.5685 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 7.72e-05 | LR_Dec: 7.72e-05
+Epoch 087 | T_Loss: 1.6759 (loss_sup: 1.6426 | loss_ent_teacher: 0.0017) | V_Loss: 1.6033 (loss_sup: 1.5656 | loss_ent_teacher: 0.0017) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 7.51e-05 | LR_Dec: 7.51e-05
+Epoch 088 | T_Loss: 1.6712 (loss_sup: 1.6383 | loss_ent_teacher: 0.0016) | V_Loss: 1.6018 (loss_sup: 1.5651 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 7.31e-05 | LR_Dec: 7.31e-05
+Epoch 089 | T_Loss: 1.6679 (loss_sup: 1.6353 | loss_ent_teacher: 0.0016) | V_Loss: 1.5968 (loss_sup: 1.5594 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 7.11e-05 | LR_Dec: 7.11e-05
+Epoch 090 | T_Loss: 1.6634 (loss_sup: 1.6308 | loss_ent_teacher: 0.0016) | V_Loss: 1.5949 (loss_sup: 1.5575 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 6.91e-05 | LR_Dec: 6.91e-05
+Epoch 091 | T_Loss: 1.6601 (loss_sup: 1.6277 | loss_ent_teacher: 0.0016) | V_Loss: 1.5919 (loss_sup: 1.5548 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 6.71e-05 | LR_Dec: 6.71e-05
+Epoch 092 | T_Loss: 1.6562 (loss_sup: 1.6239 | loss_ent_teacher: 0.0016) | V_Loss: 1.5872 (loss_sup: 1.5505 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 6.51e-05 | LR_Dec: 6.51e-05
+Epoch 093 | T_Loss: 1.6519 (loss_sup: 1.6200 | loss_ent_teacher: 0.0016) | V_Loss: 1.5832 (loss_sup: 1.5466 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 6.32e-05 | LR_Dec: 6.32e-05
+Epoch 094 | T_Loss: 1.6486 (loss_sup: 1.6166 | loss_ent_teacher: 0.0016) | V_Loss: 1.5832 (loss_sup: 1.5461 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 6.12e-05 | LR_Dec: 6.12e-05
+Epoch 095 | T_Loss: 1.6457 (loss_sup: 1.6136 | loss_ent_teacher: 0.0016) | V_Loss: 1.5780 (loss_sup: 1.5419 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.93e-05 | LR_Dec: 5.93e-05
+Epoch 096 | T_Loss: 1.6415 (loss_sup: 1.6098 | loss_ent_teacher: 0.0016) | V_Loss: 1.5765 (loss_sup: 1.5403 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.74e-05 | LR_Dec: 5.74e-05
+Epoch 097 | T_Loss: 1.6381 (loss_sup: 1.6065 | loss_ent_teacher: 0.0016) | V_Loss: 1.5694 (loss_sup: 1.5328 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.55e-05 | LR_Dec: 5.55e-05
+Epoch 098 | T_Loss: 1.6357 (loss_sup: 1.6041 | loss_ent_teacher: 0.0016) | V_Loss: 1.5731 (loss_sup: 1.5369 | loss_ent_teacher: 0.0015) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.37e-05 | LR_Dec: 5.37e-05
+Epoch 099 | T_Loss: 1.6331 (loss_sup: 1.6015 | loss_ent_teacher: 0.0016) | V_Loss: 1.5671 (loss_sup: 1.5307 | loss_ent_teacher: 0.0016) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.18e-05 | LR_Dec: 5.18e-05
+Epoch 100 | T_Loss: 1.6295 (loss_sup: 1.5984 | loss_ent_teacher: 0.0016) | V_Loss: 1.5664 (loss_sup: 1.5299 | loss_ent_teacher: 0.0015) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 5.00e-05 | LR_Dec: 5.00e-05
+Stage 1 Complete.

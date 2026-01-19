@@ -1,0 +1,48 @@
+{
+    "run_name": "qcgpt3_entangle_stage1_bootcamp",
+    "prefix": "entangle_stage1_bootcamp",
+    "seed": 42,
+
+    "num_samples": 500000,
+    "val_split": 0.05,
+    "batch_size": 4096,
+    "num_workers": 16,
+    "pin_memory": true,
+    
+    "augment_commutation": true,
+    "augment_permutation": true,
+
+    "num_epochs": 100,
+    "lr_enc": 2e-4,
+    "lr_dec": 2e-4,
+    "weight_decay": 0.00,
+    "optimizer": "adam",
+    
+    "scheduler": "cosine",
+    "t_max": 150,
+    "warmup_epochs": 5,
+
+    "lambda_sup": 1.0,
+    
+    "use_entanglement": true,
+    "lambda_ent_teacher": 0.3,
+    "lambda_ent_consistency": 0.0,
+    
+    "use_unitary_loss": false,
+    "lambda_U": 0.0,
+    
+    "use_noise": false,
+    "lambda_noise": 0.0,
+    "noise_scale": 1.0,
+    
+    "softmax_temp": 1.0,
+    "temp_schedule": "none",
+
+    "use_curriculum": true,
+    "curriculum_start_depth": 8,
+    "curriculum_end_depth": 8,
+    "curriculum_depth_step": 2,
+    "curriculum_increase_every": 10,
+    "curriculum_max_noise": 0.0,
+    "curriculum_noise_warmup": 10
+}

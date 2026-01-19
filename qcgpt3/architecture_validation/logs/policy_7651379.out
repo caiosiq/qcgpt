@@ -1,0 +1,17 @@
+------------------------------------------------
+Running QCGPT3 Policy Architecture Validation
+Date: Fri Jan  2 23:44:08 EST 2026
+------------------------------------------------
+
+--- Test 5: Policy Architecture & Forward Pass ---
+Policy initialized with d_model=64, vocab=88
+Running forward pass...
+Logits Shape: torch.Size([4, 10, 88])
+PASS: Logits shape is correct.
+Running forward pass with physics heads...
+Entanglement Prediction Shape: torch.Size([4, 10, 1])
+PASS: Physics head returned output.
+Testing Sampling Loop...
+Sampled Seqs Shape: torch.Size([4, 16])
+Sampled LogProbs Shape: torch.Size([4])
+PASS: Sampling successful.

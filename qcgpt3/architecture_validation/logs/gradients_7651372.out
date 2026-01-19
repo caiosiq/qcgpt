@@ -1,0 +1,15 @@
+------------------------------------------------
+Running QCGPT3 Gradient Flow Validation
+Date: Fri Jan  2 23:41:05 EST 2026
+------------------------------------------------
+
+--- Test 3: Gradient Sanity (Identity Loop) ---
+Starting optimization loop...
+Step 0: Loss = 5.5388
+Step 20: Loss = 0.6895
+Step 40: Loss = 0.1690
+Step 60: Loss = 0.0528
+Step 80: Loss = 0.0102
+Final Loss: 0.0032
+Plot saved to: /orcd/home/002/caiosiq/qcgpt/qcgpt3/architecture_validation/results/gradient_flow_sanity.png
+PASS: Gradients flow and optimization converges.

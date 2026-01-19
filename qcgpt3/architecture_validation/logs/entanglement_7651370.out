@@ -1,0 +1,12 @@
+------------------------------------------------
+Running QCGPT3 Entanglement Validation
+Date: Fri Jan  2 23:41:05 EST 2026
+------------------------------------------------
+
+--- Test 4: Entanglement & Truth Table ---
+Circuit: GHZ State (H-CX-CX)
+State Overlap: 1.000000
+Entropy (QDPE):   1.0000
+Entropy (Qiskit): 1.0000
+PASS: Entanglement entropy matches.
+Visualization saved to: /orcd/home/002/caiosiq/qcgpt/qcgpt3/architecture_validation/results/entanglement_state_vis.png

@@ -1,0 +1,84 @@
+{
+    "run_name": "qcgpt3_curriculum_bootcamp",
+    "prefix": "stage1_bootcamp",
+    "seed": 42,
+
+    "num_samples": 500000,
+    "val_split": 0.05,
+    "batch_size": 4096,
+    "num_workers": 16,
+    "pin_memory": true,
+    
+    "augment_commutation": true,
+    "augment_permutation": true,
+
+    "num_epochs": 250,
+    "lr": 2e-4,
+    "lr_enc": 2e-4,
+    "lr_dec": 2e-4,
+    "weight_decay": 0.00,
+    "optimizer": "adam",
+    
+    "scheduler": "none",
+    "warmup_epochs": 5,
+
+    "lambda_sup": 1.0,
+    
+    "use_entanglement": true,
+    "lambda_ent_teacher": 20.0,
+    "lambda_ent_consistency": 0.0,
+    
+    "use_unitary_loss": false,
+    "lambda_U": 0.0,
+    
+    "use_noise": false,
+    "lambda_noise": 0.0,
+    "noise_scale": 1.0,
+    
+    "softmax_temp": 1.0,
+    "temp_schedule": "none",
+
+    "use_curriculum": true,
+    "curriculum_stages": [
+        {
+            "name": "I. Foundations",
+            "start_epoch": 1,
+            "end_epoch": 80,
+            "max_depth": 8,
+            "lr_enc": 2e-4,
+            "lr_dec": 2e-4,
+            "goal": "Loss < 1.6",
+            "rationale": "Deep burn-in. Do not move until physics is intuitive."
+        },
+        {
+            "name": "II. Intermediate",
+            "start_epoch": 81,
+            "end_epoch": 150,
+            "max_depth": 12,
+            "lr_enc": 3e-4,
+            "lr_dec": 3e-4,
+            "goal": "Loss < 2.0",
+            "rationale": "Bridging the gap. The jump from 8 to 12 is the hardest."
+        },
+        {
+            "name": "III. QFT Range",
+            "start_epoch": 151,
+            "end_epoch": 220,
+            "max_depth": 16,
+            "lr_enc": 4e-4,
+            "lr_dec": 4e-4,
+            "goal": "Loss < 2.2",
+            "rationale": "Target zone. Sufficient for basic algorithms."
+        },
+        {
+            "name": "IV. Advanced",
+            "start_epoch": 221,
+            "end_epoch": 250,
+            "max_depth": 20,
+            "lr_enc": 5e-4,
+            "lr_dec": 5e-4,
+            "goal": "Loss < 2.5",
+            "rationale": "Stress testing."
+        }
+    ]
+}

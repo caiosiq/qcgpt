@@ -1,0 +1,40 @@
+------------------------------------------------
+Starting Stage 1: The Bootcamp
+Date: Mon Jan  5 09:56:58 EST 2026
+------------------------------------------------
+Loading config from qcgpt3/configs/stage1_bootcamp.json
+Created run directory: model_checkpoints/qcgpt3_stage1_bootcamp
+Building dataloader with max_depth=8
+[HighPerformanceDataset] Configured for 500000 samples. QDPE-accelerated.
+Starting training from epoch 1 to 100
+Epoch 001 | T_Loss: 3.8900 (loss_sup: 3.8900) | V_Loss: 3.7598 (loss_sup: 3.7601) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 002 | T_Loss: 3.6271 (loss_sup: 3.6270) | V_Loss: 3.4941 (loss_sup: 3.4959) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 003 | T_Loss: 3.4449 (loss_sup: 3.4449) | V_Loss: 3.3360 (loss_sup: 3.3374) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 004 | T_Loss: 3.3124 (loss_sup: 3.3124) | V_Loss: 3.2155 (loss_sup: 3.2167) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 2.00e-04 | LR_Dec: 2.00e-04
+Epoch 005 | T_Loss: 3.1989 (loss_sup: 3.1989) | V_Loss: 3.0896 (loss_sup: 3.0910) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 006 | T_Loss: 3.0891 (loss_sup: 3.0890) | V_Loss: 2.9683 (loss_sup: 2.9688) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 007 | T_Loss: 2.9796 (loss_sup: 2.9795) | V_Loss: 2.8536 (loss_sup: 2.8543) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 008 | T_Loss: 2.8819 (loss_sup: 2.8819) | V_Loss: 2.7688 (loss_sup: 2.7688) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.99e-04 | LR_Dec: 1.99e-04
+Epoch 009 | T_Loss: 2.7988 (loss_sup: 2.7988) | V_Loss: 2.6821 (loss_sup: 2.6810) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.98e-04 | LR_Dec: 1.98e-04
+Epoch 010 | T_Loss: 2.7275 (loss_sup: 2.7274) | V_Loss: 2.6101 (loss_sup: 2.6084) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.98e-04 | LR_Dec: 1.98e-04
+Epoch 011 | T_Loss: 2.6593 (loss_sup: 2.6593) | V_Loss: 2.5205 (loss_sup: 2.5179) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.97e-04 | LR_Dec: 1.97e-04
+Epoch 012 | T_Loss: 2.5715 (loss_sup: 2.5715) | V_Loss: 2.4283 (loss_sup: 2.4271) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.97e-04 | LR_Dec: 1.97e-04
+Epoch 013 | T_Loss: 2.5006 (loss_sup: 2.5006) | V_Loss: 2.3721 (loss_sup: 2.3691) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.96e-04 | LR_Dec: 1.96e-04
+Epoch 014 | T_Loss: 2.4437 (loss_sup: 2.4437) | V_Loss: 2.3109 (loss_sup: 2.3095) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.96e-04 | LR_Dec: 1.96e-04
+Epoch 015 | T_Loss: 2.3978 (loss_sup: 2.3978) | V_Loss: 2.2728 (loss_sup: 2.2707) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.95e-04 | LR_Dec: 1.95e-04
+Epoch 016 | T_Loss: 2.3566 (loss_sup: 2.3566) | V_Loss: 2.2368 (loss_sup: 2.2344) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.94e-04 | LR_Dec: 1.94e-04
+Epoch 017 | T_Loss: 2.3200 (loss_sup: 2.3199) | V_Loss: 2.1984 (loss_sup: 2.1956) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.94e-04 | LR_Dec: 1.94e-04
+Epoch 018 | T_Loss: 2.2872 (loss_sup: 2.2872) | V_Loss: 2.1620 (loss_sup: 2.1587) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.93e-04 | LR_Dec: 1.93e-04
+Epoch 019 | T_Loss: 2.2573 (loss_sup: 2.2572) | V_Loss: 2.1446 (loss_sup: 2.1412) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.92e-04 | LR_Dec: 1.92e-04
+Epoch 020 | T_Loss: 2.2288 (loss_sup: 2.2288) | V_Loss: 2.1099 (loss_sup: 2.1064) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.91e-04 | LR_Dec: 1.91e-04
+Epoch 021 | T_Loss: 2.2027 (loss_sup: 2.2027) | V_Loss: 2.0789 (loss_sup: 2.0752) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.90e-04 | LR_Dec: 1.90e-04
+Epoch 022 | T_Loss: 2.1785 (loss_sup: 2.1785) | V_Loss: 2.0580 (loss_sup: 2.0545) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.90e-04 | LR_Dec: 1.90e-04
+Epoch 023 | T_Loss: 2.1543 (loss_sup: 2.1543) | V_Loss: 2.0393 (loss_sup: 2.0363) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.89e-04 | LR_Dec: 1.89e-04
+Epoch 024 | T_Loss: 2.1320 (loss_sup: 2.1320) | V_Loss: 2.0215 (loss_sup: 2.0179) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.88e-04 | LR_Dec: 1.88e-04
+Epoch 025 | T_Loss: 2.1109 (loss_sup: 2.1109) | V_Loss: 2.0103 (loss_sup: 2.0064) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.87e-04 | LR_Dec: 1.87e-04
+Epoch 026 | T_Loss: 2.0902 (loss_sup: 2.0902) | V_Loss: 1.9795 (loss_sup: 1.9761) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.86e-04 | LR_Dec: 1.86e-04
+Epoch 027 | T_Loss: 2.0708 (loss_sup: 2.0708) | V_Loss: 1.9578 (loss_sup: 1.9536) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.84e-04 | LR_Dec: 1.84e-04
+Epoch 028 | T_Loss: 2.0515 (loss_sup: 2.0515) | V_Loss: 1.9432 (loss_sup: 1.9398) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.83e-04 | LR_Dec: 1.83e-04
+Epoch 029 | T_Loss: 2.0335 (loss_sup: 2.0335) | V_Loss: 1.9180 (loss_sup: 1.9142) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.82e-04 | LR_Dec: 1.82e-04
+Epoch 030 | T_Loss: 2.0164 (loss_sup: 2.0164) | V_Loss: 1.9096 (loss_sup: 1.9048) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.81e-04 | LR_Dec: 1.81e-04
+Epoch 031 | T_Loss: 2.0008 (loss_sup: 2.0008) | V_Loss: 1.8912 (loss_sup: 1.8868) | D: 8 | N_W: 0.00 | Temp: 1.00 | LR_Enc: 1.80e-04 | LR_Dec: 1.80e-04

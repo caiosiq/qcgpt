@@ -1,0 +1,18 @@
+------------------------------------------------
+Running QCGPT3 Physics Engine Validation
+Date: Sat Jan  3 00:29:51 EST 2026
+------------------------------------------------
+
+--- Test 1.A: Hard Consistency (Matrix Test) ---
+Running depth sweep for Hard Consistency...
+
+--- Analysis ---
+Safe Gates (appeared in passing circuits): ['CCX', 'CP_PI_16', 'CP_PI_2', 'CP_PI_4', 'CP_PI_8', 'CSWAP', 'CX', 'CZ', 'H', 'RX_PI_16', 'RX_PI_4', 'RX_PI_8', 'RY_PI_2', 'RY_PI_4', 'RY_PI_8', 'S', 'SWAP', 'SX', 'SX_dag', 'S_dag', 'T', 'T_dag', 'X', 'Y', 'Z']
+No single gate is exclusively in failed circuits. Likely an interaction or phase issue.
+Hard consistency plot saved.
+PASS: Hard Physics matches Qiskit across depths.
+
+--- Test 1.B: Soft Consistency (Interpolation Test) ---
+Running interpolation sweep...
+Soft consistency plot saved.
+PASS: Soft Physics interpolates correctly.

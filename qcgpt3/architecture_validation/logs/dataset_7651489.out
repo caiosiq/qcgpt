@@ -1,0 +1,16 @@
+------------------------------------------------
+Running QCGPT3 Dataset Pipeline Validation
+Date: Fri Jan  2 23:59:20 EST 2026
+------------------------------------------------
+
+--- Test 6: Dataset Pipeline & Augmentations ---
+[HighPerformanceDataset] Configured for 10 samples. QDPE-accelerated.
+Dataset initialized. Length: 10
+Fetching sample 0...
+Spec Shape: torch.Size([8, 2, 8, 2])
+Tokens Shape: torch.Size([10])
+Circuit Gates: 8
+Checking variety across samples...
+PASS: Samples show variety.
+Spec visualization saved to: /orcd/home/002/caiosiq/qcgpt/qcgpt3/architecture_validation/results/dataset_spec_vis.png
+PASS: Dataset pipeline functional.
