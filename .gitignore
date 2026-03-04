@@ -1,4 +1,6 @@
 batch_jobs/logs/*
 model_checkpoints/*
+model_checkpoints_old/*
 model_evaluations/*
+saved_models/*
 comparison_results/*

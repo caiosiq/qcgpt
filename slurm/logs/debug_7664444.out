@@ -1,0 +1,41 @@
+Running QCGPT3 Debug Script...
+Date: Sat Jan  3 21:09:21 EST 2026
+------------------------------------------------
+
+=== Checking Dataset Consistency (Augmentations) ===
+[HighPerformanceDataset] Configured for 20 samples. QDPE-accelerated.
+Sample 0 [OK]: Diff = 0.000000e+00
+Sample 1 [OK]: Diff = 0.000000e+00
+Sample 2 [OK]: Diff = 0.000000e+00
+Sample 3 [OK]: Diff = 0.000000e+00
+Sample 4 [OK]: Diff = 0.000000e+00
+Sample 5 [OK]: Diff = 0.000000e+00
+Sample 6 [OK]: Diff = 1.931411e-07
+Sample 7 [OK]: Diff = 0.000000e+00
+Sample 8 [OK]: Diff = 0.000000e+00
+Sample 9 [OK]: Diff = 0.000000e+00
+Sample 10 [OK]: Diff = 0.000000e+00
+Sample 11 [OK]: Diff = 0.000000e+00
+Sample 12 [OK]: Diff = 0.000000e+00
+Sample 13 [OK]: Diff = 0.000000e+00
+Sample 14 [OK]: Diff = 0.000000e+00
+Sample 15 [OK]: Diff = 0.000000e+00
+Sample 16 [OK]: Diff = 0.000000e+00
+Sample 17 [OK]: Diff = 0.000000e+00
+Sample 18 [OK]: Diff = 0.000000e+00
+Sample 19 [OK]: Diff = 0.000000e+00
+>> Dataset Consistency: PASS
+
+=== Checking Model Gradients & Forward Pass ===
+Running Forward Pass...
+Logits Shape: torch.Size([2, 10, 106])
+Physics Preds Shape: torch.Size([2, 10, 1])
+Logits are numeric (No NaNs).
+Running Backward Pass (Gradient Check)...
+Warning: No grad for decoder.entanglement_head.net.0.weight
+Warning: No grad for decoder.entanglement_head.net.0.bias
+Warning: No grad for decoder.entanglement_head.net.2.weight
+Warning: No grad for decoder.entanglement_head.net.2.bias
+>> Gradients: ISSUES FOUND
+------------------------------------------------
+Debug Run Complete.
